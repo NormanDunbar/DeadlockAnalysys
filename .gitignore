@@ -6,6 +6,7 @@
 *.lo
 *.o
 *.obj
+obj/*
 
 # Precompiled Headers
 *.gch
@@ -30,3 +31,15 @@
 *.exe
 *.out
 *.app
+bin/*
+
+# Code::Blocks
+*.depend
+*.layout
+*.save
+
+
+# My Test File(s)
+*.trc
+
+
