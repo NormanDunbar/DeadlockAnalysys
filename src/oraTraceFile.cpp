@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2019 Norman Dunbar
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "oraTraceFile.h"
 
 using std::getline;
@@ -7,7 +31,7 @@ using std::endl;
 //==============================================================================
 //                                                                   Constructor
 //==============================================================================
-oraTraceFile::oraTraceFile(std::string traceFileName)
+oraTraceFile::oraTraceFile(string traceFileName)
 {
     mIFS = nullptr;
     mLineNumber = 0;
@@ -30,6 +54,7 @@ oraTraceFile::~oraTraceFile()
 
 //==============================================================================
 //                                                                  initialise()
+//------------------------------------------------------------------------------
 // Extracts various details from the heading lines in the trace file.
 //==============================================================================
 void oraTraceFile::initialise()
@@ -87,6 +112,7 @@ void oraTraceFile::initialise()
 
 //==============================================================================
 //                                                                    readLine()
+//------------------------------------------------------------------------------
 // Reads the next line from the tracefile. Makes sure that line numbers
 // and previous lines are sorted out. Returns the new line read.
 //==============================================================================
@@ -97,6 +123,7 @@ string oraTraceFile::readLine()
 
     if (mIFS->good()) {
         mLineNumber++;
+        //std::cerr << mLineNumber << ": [" << mCurrentLine << ']' << endl;
         return mCurrentLine;
     };
 
@@ -106,6 +133,7 @@ string oraTraceFile::readLine()
 
 //==============================================================================
 //                                                                 findAtStart()
+//------------------------------------------------------------------------------
 // Looks for some text, case sensitive, at the start of the current
 // line from the trace file. If not found, this will keep reading lines until
 // it is found or we hit an error or EOF. Returns true if found.
@@ -117,15 +145,15 @@ bool oraTraceFile::findAtStart(const string lookFor)
     while (mIFS->good()) {
         readLine();
         if (mCurrentLine.substr(0, lookSize) == lookFor ) {
-            break;
+            return true;
         }
     }
-
     return mIFS->good();
 }
 
 //==============================================================================
 //                                                                findDeadlock()
+//------------------------------------------------------------------------------
 // Helper to find the start of each deadlock in the tracefile.
 //==============================================================================
 bool oraTraceFile::findDeadlock()
@@ -135,6 +163,7 @@ bool oraTraceFile::findDeadlock()
 
 //==============================================================================
 //                                                           findDeadlockGraph()
+//------------------------------------------------------------------------------
 // Helper to find the start of each deadlock graph in the tracefile.
 //==============================================================================
 bool oraTraceFile::findDeadlockGraph()
@@ -144,6 +173,7 @@ bool oraTraceFile::findDeadlockGraph()
 
 //==============================================================================
 //                                                            printInformation()
+//------------------------------------------------------------------------------
 // Prints out the information in the tracefile header.
 //==============================================================================
 ostream &oraTraceFile::printInformation(ostream &out)

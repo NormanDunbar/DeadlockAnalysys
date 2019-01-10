@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="C:\Users\hisg494\CodeBlocks\SourceCode\DeadlockAnalysis\test.trc" />
+				<Option parameters="C:\Users\hisg494\CodeBlocks\SourceCode\DeadlockAnalysys\test.trc" />
 				<Compiler>
 					<Add option="-std=c++14" />
 					<Add option="-g" />
@@ -23,7 +23,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="C:\Users\hisg494\CodeBlocks\SourceCode\DeadlockAnalysis\test.trc" />
+				<Option parameters="C:\Users\hisg494\CodeBlocks\SourceCode\DeadlockAnalysys\test.trc" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-std=c++14" />
@@ -38,9 +38,11 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="include/oraBlockerWaiter.h" />
 		<Unit filename="include/oraDeadlock.h" />
 		<Unit filename="include/oraTraceFile.h" />
 		<Unit filename="src/DeadlockAnalysis.cpp" />
+		<Unit filename="src/oraBlockerWaiter.cpp" />
 		<Unit filename="src/oraDeadlock.cpp" />
 		<Unit filename="src/oraTraceFile.cpp" />
 		<Extensions>
