@@ -76,7 +76,8 @@ using std::vector;
 // Globals. (Yes, I know they are frowned upon - I don't actually care, ok?)
 string programName = "DeadlockAnalysis";
 string programVersion = "0.1.0";
-string programAuthor = "Norman Dunbar (norman@dunbar-it.co.uk)";
+string programAuthor = "Norman Dunbar";
+string authorEmail = "norman@dunbar-it.co.uk";
 
 #define ERR_INVALID_PARAMS    1
 #define ERR_INVALID_TRACEFILE 2
@@ -86,11 +87,12 @@ string programAuthor = "Norman Dunbar (norman@dunbar-it.co.uk)";
 //                                                                       USAGE()
 //==============================================================================
 void usage(int errorCode, string errorText) {
-    cerr << endl
-         << programName << ": ERROR: " << errorText << endl << endl
-         << "USAGE:" << endl
-         << "\t" << programName << " tracefile_name >report_name" << endl
+    cerr << '\n'
+         << programName << ": ERROR: " << errorText << "\n'\n"
+         << "USAGE:\n"
+         << "\t" << programName << " tracefile_name >report_name\n"
          << endl;
+
     std::exit(errorCode);
 }
 
@@ -102,8 +104,12 @@ void usage(int errorCode, string errorText) {
 int main(int argc, char *argv[])
 {
     // Sign on, tell the world who I am!
-    cerr << endl << programName << ": v" << programVersion << '\n'
-         << "(c)" << programAuthor << '\n' << endl;
+    cerr << "****************************\n* "
+         << programName << ": v" << programVersion
+         << " *\n* (c) " << programAuthor << "        *\n"
+         << "* " << authorEmail << "   *\n"
+         << "****************************\n"
+         << endl;
 
     // There must be a single parameter.
     if (argc != 2) {
@@ -117,8 +123,9 @@ int main(int argc, char *argv[])
     }
 
     // Display the trace file details.
-    cerr << "Tracefile '" << argv[1] << "' opened.\n" << endl;
-    traceFile.printInformation(cerr);
+    cerr << "Tracefile Details:\n"
+         << "=================\n\n"
+         << traceFile << endl;
 
     // Do we have any deadlocks?
     vector<oraDeadlock> deadlocks;
@@ -137,13 +144,53 @@ int main(int argc, char *argv[])
         }
     }
 
-    cerr << "Extraction complete." << endl
+    cerr << "Extraction complete.\n"
          << "There were " << deadlocks.size()
-         << " deadlock(s) found.\n" << endl;
+         << " deadlock(s) found.\n\n";
 
     // List deadlocks in trace file.
-    cerr << "DEADLOCKS:\n" << endl;
+    cerr << "DEADLOCKS:\n"
+         << "=========\n\n";
+
+    unsigned dl = 0;
     for (auto i = deadlocks.begin(); i != deadlocks.end(); i++) {
+        cerr << "Deadlock: " << dl << '\n'
+             << "---------\n";
+
+        vector<string> *sigs = i->signatures();
+        for (auto j = (*sigs).begin(); j != (*sigs).end(); j++) {
+            cerr << "Signature(s): " << *j << '\n';
+        }
+
+        // What did we get?
+        if (i->txxx()) {
+            if (i->rows() > 1) {
+                cerr << "*** Probably an APPLICATION Deadlock.\n";
+            } else {
+                cerr << "*** Probably an SELF DEADLOCK Deadlock.\n";
+            }
+        }
+
+        if (i->txxs()) {
+            if (i->rows() > 1) {
+                cerr << "*** Probably an BITMAP INDEX/ITL/PK or UK inconsistency Deadlock.\n";
+            } else {
+                cerr << "*** UNKNOWN TXXS Deadlock. Inform Norm!\n";
+            }
+        }
+
+        if (i->tm()) {
+            if (i->rows() > 1) {
+                cerr << "*** Probably MISSING FK INDEX Deadlock.\n";
+            } else {
+                cerr << "*** UNKNOWN TM Deadlock. Inform Norm!\n";
+            }
+        }
+
+        if (i->ul()) {
+            cerr << "*** Definitely a USER DEFINED LOCK Deadlock.\n";
+        }
+
         cerr << *i << endl;
     }
 

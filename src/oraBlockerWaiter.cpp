@@ -22,8 +22,15 @@
  * SOFTWARE.
  */
 
+
 #include "oraBlockerWaiter.h"
 
+//==============================================================================
+//                                                                    leftTrim()
+//------------------------------------------------------------------------------
+// Returns a string, trimmed of any leading characters requested to be removed.
+// If the string is all the requested characters, return "".
+//==============================================================================
 string leftTrim(string &s, const string what)
 {
     auto pos = s.find_first_not_of(what);
@@ -31,8 +38,9 @@ string leftTrim(string &s, const string what)
         return s.substr(pos);
     }
 
-    return s;
+    return "";
 }
+
 
 
 //==============================================================================
@@ -47,6 +55,12 @@ oraBlockerWaiter::oraBlockerWaiter(bool isWaiter) :
     mBlock = 0;
     mSlot = 0;
     mObjectId = 0;
+
+    // Preallocate string space.
+    mResourceName.reserve(20);
+    mHolds.reserve(3);
+    mWaits.reserve(3);
+    mRowidWait.reserve(20);
 }
 
 //==============================================================================
@@ -59,6 +73,8 @@ oraBlockerWaiter::~oraBlockerWaiter()
 
 //==============================================================================
 //                                                                    setHolds()
+//------------------------------------------------------------------------------
+// Updates the lock held by this blocker/waiter.
 //==============================================================================
 void oraBlockerWaiter::setHolds(string val)
 {
@@ -67,6 +83,8 @@ void oraBlockerWaiter::setHolds(string val)
 
 //==============================================================================
 //                                                                    setWaits()
+//------------------------------------------------------------------------------
+// Updates the lock held by this blocker/waiter.
 //==============================================================================
 void oraBlockerWaiter::setWaits(string val)
 {
@@ -76,31 +94,32 @@ void oraBlockerWaiter::setWaits(string val)
 //==============================================================================
 //                                                                   Operator <<
 //------------------------------------------------------------------------------
-// Used to dump out an oraBlockerWaiter to a stream, for debugging.
+// Used to dump out an oraBlockerWaiter to a stream, for debugging/reporting.
 //==============================================================================
 ostream& operator<<(ostream &out, const oraBlockerWaiter &bw) {
 
     // All waiters and blockers have these ...
-    out << "\tResource Name:   " << bw.mResourceName << endl
-        << "\tProcess:         " << bw.mProcess << endl
-        << "\tSession:         " << bw.mSession << endl
-        << "\tHolding:         " << bw.mHolds << endl;
+    out << "\tResource Name:   " << bw.mResourceName << '\n'
+        << "\tProcess:         " << bw.mProcess << '\n'
+        << "\tSession:         " << bw.mSession << '\n'
+        << "\tHolding:         " << (bw.mHolds.empty() ? "None" : bw.mHolds) << '\n'
+        << "\tWaiting:         " << (bw.mWaits.empty() ? "None" : bw.mWaits) << '\n';
 
     if (bw.mIsWaiter) {
         // But only waiters have these...
-        out << "\tWaiting:          " << bw.mWaits << endl
-            << "\tBlocking Session: " << bw.mOtherSession << endl
-            << "\tRowid Waiting:    " << bw.mRowidWait << endl
-            << "\tFile Waiting:     " << bw.mFile << endl
-            << "\tBlock Waiting:    " << bw.mBlock << endl
-            << "\tSlot Waiting:     " << bw.mSlot << endl
-            << "\tObjectID:         " << bw.mObjectId << endl;
+        out << "\tBlocking Session: " << bw.mOtherSession << '\n'
+            << "\tRowid Waiting:    " << bw.mRowidWait << '\n'
+            << "\tFile Waiting:     " << bw.mFile << '\n'
+            << "\tBlock Waiting:    " << bw.mBlock << '\n'
+            << "\tSlot Waiting:     " << bw.mSlot << '\n'
+            << "\tObjectID:         " << bw.mObjectId << '\n';
     } else {
         // And this is for blockers only.
-        out << "\tWaiting Session: " << bw.mOtherSession << endl;
+        out << "\tWaiting Session: " << bw.mOtherSession << '\n';
     }
 
     out << endl;
 
     return out;
 }
+

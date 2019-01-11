@@ -35,8 +35,15 @@ oraTraceFile::oraTraceFile(string traceFileName)
 {
     mIFS = nullptr;
     mLineNumber = 0;
-    mPreviousLine = mCurrentLine = mInstanceName = "";
-    mRecreatedTraceFile = false;
+    mPreviousLine.reserve(120);
+    mCurrentLine.reserve(120);
+    mInstanceName.reserve(20);
+    mOriginalPath.reserve(200);
+    mSystemName.reserve(20);
+    mOracleHome.reserve(120);
+    mServerName.reserve(20);
+
+
     mIFS = new ifstream(traceFileName);
     initialise();
 }
@@ -61,11 +68,6 @@ void oraTraceFile::initialise()
 {
     // Read the trace file and extract some "stuff". On exit from here
     // We are sat having just read the first blank line in the trace file.
-    mInstanceName = "";
-    mOriginalPath = "";
-    mSystemName = "";
-    mOracleHome = "";
-    mServerName = "";
 
     while (mIFS->good()) {
         readLine();
@@ -172,17 +174,27 @@ bool oraTraceFile::findDeadlockGraph()
 }
 
 //==============================================================================
-//                                                            printInformation()
+//                                                                 trimmedLine()
 //------------------------------------------------------------------------------
-// Prints out the information in the tracefile header.
+// Returns the current line from the trace file, without leading whitespace.
 //==============================================================================
-ostream &oraTraceFile::printInformation(ostream &out)
+string oraTraceFile::trimmedLine()
 {
-    out << "Original Trace File: " << mOriginalPath << endl
-        << "System:              " << mSystemName << endl
-        << "Server name:         " << mServerName << endl
-        << "Oracle Home:         " << mOracleHome << endl
-        << "Instance Name:       " << mInstanceName << endl << endl;
+    return mCurrentLine.substr(mCurrentLine.find_first_not_of(" \t"));
+}
+
+//==============================================================================
+//                                                                   Operator <<
+//------------------------------------------------------------------------------
+// Used to dump out an oraTraceFile to a stream, for debugging/reporting.
+//==============================================================================
+ostream& operator<<(ostream &out, const oraTraceFile &tf)
+{
+    out << "Original Trace File: " << tf.mOriginalPath << '\n'
+        << "System:              " << tf.mSystemName << '\n'
+        << "Server name:         " << tf.mServerName << '\n'
+        << "Oracle Home:         " << tf.mOracleHome << '\n'
+        << "Instance Name:       " << tf.mInstanceName << '\n' << endl;
 
     return out;
 }

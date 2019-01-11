@@ -38,6 +38,12 @@ using std::find;
 oraDeadlock::oraDeadlock(unsigned lineNumber):
     mLineNumber{lineNumber}
 {
+    // Preallocate strings.
+    mDate.reserve(10);
+    mTime.reserve(10);
+
+    // Allocate space for 5 strings.
+    mSignatures.reserve(5);
 }
 
 //==============================================================================
@@ -48,6 +54,7 @@ oraDeadlock::~oraDeadlock()
     // No pointers involved, so this is good.
     mBlockers.clear();
     mWaiters.clear();
+    mSignatures.clear();
 }
 
 //==============================================================================
@@ -113,7 +120,11 @@ TX-00360007-001b448f       779    2156     X            985     272           S
         return false;
     }
 
+    // Each resource should have a blocker and waiter.
     oraBlockerWaiter tempBlocker(false), tempWaiter(true);
+
+    // And a signature.
+    string signature;
 
     deadlockTime = traceFile.readLine();
     while (traceFile.good()) {
@@ -123,23 +134,47 @@ TX-00360007-001b448f       779    2156     X            985     272           S
         }
 
         //Extract the blocking session's details.
+        signature = deadlockTime.substr(0, 2);
+
         auto pos = deadlockTime.find(" ");
         tempBlocker.setResourceName(deadlockTime.substr(0, pos));
         tempBlocker.setProcess(stoi(deadlockTime.substr(23, 7)));
         tempBlocker.setSession(stoi(deadlockTime.substr(31, 7)));
         tempBlocker.setHolds(deadlockTime.substr(39, 5));
+        signature += tempBlocker.holds();
         tempBlocker.setWaits(deadlockTime.substr(45, 5));
+        signature += tempBlocker.waits();
 
         //Extract the waiting session's details.
         tempWaiter.setResourceName(tempBlocker.resourceName());
         tempWaiter.setProcess(stoi(deadlockTime.substr(52, 7)));
         tempWaiter.setSession(stoi(deadlockTime.substr(60, 7)));
         tempWaiter.setHolds(deadlockTime.substr(68, 5));
+        signature += tempWaiter.holds();
         tempWaiter.setWaits(deadlockTime.substr(74, 5));
+        signature += tempWaiter.waits();
 
         // Set the corresponding other session.
         tempBlocker.setOtherSession(tempWaiter.session());
         tempWaiter.setOtherSession(tempBlocker.session());
+
+        // Save the deadlock signature if the list is currently empty, or
+        // if we don't have this signature already. I know it's a palava
+        // scanning the vector, but it's only small.
+        vector<string>::iterator i;
+        for (i = mSignatures.begin(); i != mSignatures.end(); i++) {
+            if (*i == signature) {
+                // Exists, stop looking.
+                break;
+            }
+        }
+
+        // If we hit the end, add it. Even if the final string was equal
+        // we won't be sitting at mSignatures.end() as that is past the end.
+        if (i == mSignatures.end()) {
+            mSignatures.push_back(signature);
+        }
+
 
         // Save the blocker's details.
         auto ok = mBlockers.insert(pair<unsigned, oraBlockerWaiter>(tempBlocker.session(), tempBlocker));
@@ -222,35 +257,104 @@ Rows waited on:
     return traceFile.good();
 }
 
+//==============================================================================
+//                                                                  signatures()
+//------------------------------------------------------------------------------
+// Returns a pointer to the list of signatures for this deadlock.
+//==============================================================================
+vector<string> *oraDeadlock::signatures()
+{
+    return &mSignatures;
+}
+
+//==============================================================================
+//                                                                    blockers()
+//------------------------------------------------------------------------------
+// Returns a pointer to the list of blockers for this deadlock.
+//==============================================================================
+map<unsigned, oraBlockerWaiter> *oraDeadlock::blockers()
+{
+    return &mBlockers;
+}
+
+//==============================================================================
+//                                                                     waiters()
+//------------------------------------------------------------------------------
+// Returns a pointer to the list of waiters for this deadlock.
+//==============================================================================
+map<unsigned, oraBlockerWaiter> *oraDeadlock::waiters()
+{
+    return &mWaiters;
+}
+
+//==============================================================================
+//                                                                     ???????()
+//------------------------------------------------------------------------------
+// The following boolean functions return true if any of the deadlock signatures
+// match that requested.
+//==============================================================================
+bool oraDeadlock::sigType(const string what) {
+    for (auto i = mSignatures.begin(); i != mSignatures.end(); i++) {
+        if ((*i).substr(0, what.size()) == what) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool oraDeadlock::txxx()    // Application error? Self Deadlock?
+{
+    return sigType("TXXX");
+}
+
+bool oraDeadlock::txxs()    // Bitmap Index? ITL? PK/UK inconsistency?
+{
+    return sigType("TXXS");
+}
+
+bool oraDeadlock::ul()      // User defined lock;
+{
+    return sigType("UL");
+}
+
+bool oraDeadlock::tm()      // Missing FK index?
+{
+    return sigType("TMSXSSXSXSSX");
+}
+
+
+
 
 //==============================================================================
 //                                                                   Operator <<
 //------------------------------------------------------------------------------
-// Used to dump out an oraDeadlock to a stream, for debugging.
+// Used to dump out an oraDeadlock to a stream, for debugging/reporting.
 //==============================================================================
 ostream& operator<<(ostream &out, const oraDeadlock &dl) {
-    out << "Line Number: " << dl.mLineNumber << endl
-        << "Date:        " << dl.mDate << endl
-        << "Time:        " << dl.mTime << endl
-        << "Blockers:    " << dl.mBlockers.size() << endl;
+    out << "Line Number:  " << dl.mLineNumber << '\n'
+        << "Date:         " << dl.mDate << '\n'
+        << "Time:         " << dl.mTime << '\n'
+        << "Blockers:     " << dl.mBlockers.size() << "\n\n";
 
     // List the blockers.
     unsigned x = 0;
     for (auto i = dl.mBlockers.begin(); i != dl.mBlockers.end(); i++) {
-        out << "\tBlocker: " << x << endl
-            << i->second << endl;
+        out << "\tBlocker: " << x << '\n'
+            << "\t-------\n"
+            << i->second << '\n';
         x++;
     }
 
     // List the waiters.
-    out << "Waiters:     " << dl.mWaiters.size() << endl;
+    out << "Waiters:     " << dl.mWaiters.size() << "\n\n";
     x = 0;
     for (auto i = dl.mWaiters.begin(); i != dl.mWaiters.end(); i++) {
-        out << "\tWaiter: " << x << endl
+        out << "\tWaiter: " << x << '\n'
+            << "\t------\n"
             << i->second << endl;
         x++;
     }
-
 
     return out;
 }

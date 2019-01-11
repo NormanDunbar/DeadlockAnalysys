@@ -27,12 +27,14 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 // Vector blows up below if I just use "class" here. Sigh.
 #include "oraBlockerWaiter.h"
 
 using std::string;
 using std::map;
+using std::vector;
 
 class oraTraceFile;
 
@@ -50,16 +52,26 @@ class oraDeadlock
         string mTime;
         map<unsigned, oraBlockerWaiter>mBlockers;
         map<unsigned, oraBlockerWaiter>mWaiters;
+        vector<string> mSignatures;
+        bool sigType(const string what);
 
 
     public:
-        unsigned lineNumber() { return mLineNumber; };
+        unsigned lineNumber() { return mLineNumber; }
         void setDateTime(string date, string time);
-        string date() { return mDate; };
-        string time() { return mTime; };
-        string dateTime() { return "on " + mDate + " at " + mTime; };
+        string date() { return mDate; }
+        string time() { return mTime; }
+        string dateTime() { return "on " + mDate + " at " + mTime; }
         bool extractDeadlockGraph(oraTraceFile &traceFile);
         friend ostream& operator<<(ostream &out, const oraDeadlock &dl);
+        vector<string> *signatures();
+        map<unsigned, oraBlockerWaiter> *blockers();
+        map<unsigned, oraBlockerWaiter> *waiters();
+        unsigned rows() { return mBlockers.size(); }
+        bool txxx();    // Application error? Self Deadlock?
+        bool txxs();    // Bitmap Index? ITL? PK/UK inconsistency?
+        bool ul();      // User defined lock;
+        bool tm();      // Missing FK index?
 
 };
 

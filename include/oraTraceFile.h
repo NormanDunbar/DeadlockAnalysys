@@ -46,7 +46,6 @@ class oraTraceFile
         unsigned mLineNumber;
         string mPreviousLine;
         string mCurrentLine;
-        bool mRecreatedTraceFile;
 
         // These are extracted from the trace file.
         string mInstanceName;
@@ -58,21 +57,22 @@ class oraTraceFile
         void initialise();
 
     public:
-        string currentLine() { return mCurrentLine; };
-        string previousLine() { return mPreviousLine; };
-        string instanceName() { return mInstanceName; };
-        unsigned lineNumber() { return mLineNumber; };
-        string traceFile() { return mOriginalPath; };
-        string oracleHome() { return mOracleHome; };
-        string systemName() { return mSystemName; };
-        string serverName() { return mServerName; };
-        bool good() { return mIFS->good(); };
-        bool eof() { return mIFS->eof(); };
+        string currentLine() { return mCurrentLine; }
+        string previousLine() { return mPreviousLine; }
+        string instanceName() { return mInstanceName; }
+        unsigned lineNumber() { return mLineNumber; }
+        string traceFile() { return mOriginalPath; }
+        string oracleHome() { return mOracleHome; }
+        string systemName() { return mSystemName; }
+        string serverName() { return mServerName; }
+        bool good() { return mIFS->good(); }
+        bool eof() { return mIFS->eof(); }
         string readLine();
+        string trimmedLine();
         bool findAtStart(const string lookFor);
         bool findDeadlock();
         bool findDeadlockGraph();
-        ostream &printInformation(ostream &out);
+        friend ostream& operator<<(ostream &out, const oraTraceFile &tf);
 
 };
 

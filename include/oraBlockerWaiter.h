@@ -65,17 +65,17 @@ class oraBlockerWaiter
         unsigned objectId() { return mObjectId; }
         void setObjectId(unsigned val) { mObjectId = val; }
 
-        unsigned file() { return mFile; };
-        void setFile(unsigned val) { mFile = val; };
+        unsigned file() { return mFile; }
+        void setFile(unsigned val) { mFile = val; }
 
-        unsigned block() { return mBlock; };
+        unsigned block() { return mBlock; }
         void setBlock(unsigned val) { mBlock = val; };
 
-        unsigned slot() { return mSlot; };
-        void setSlot(unsigned val) { mSlot = val; };
+        unsigned slot() { return mSlot; }
+        void setSlot(unsigned val) { mSlot = val; }
 
-        unsigned otherSession() { return mOtherSession; };
-        void setOtherSession(unsigned val) { mOtherSession = val; };
+        unsigned otherSession() { return mOtherSession; }
+        void setOtherSession(unsigned val) { mOtherSession = val; }
 
         friend ostream& operator<<(ostream &out, const oraBlockerWaiter &bw);
 
