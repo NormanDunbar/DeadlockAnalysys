@@ -35,9 +35,11 @@ using std::find;
 //==============================================================================
 //                                                                   Constructor
 //==============================================================================
-oraDeadlock::oraDeadlock(unsigned lineNumber):
-    mLineNumber{lineNumber}
+oraDeadlock::oraDeadlock(oraTraceFile *tf)
 {
+    // Get the line number.
+    mTraceFile = tf;
+    mLineNumber = tf->lineNumber();
     // Preallocate strings.
     mDate.reserve(10);
     mTime.reserve(10);
@@ -95,15 +97,18 @@ void oraDeadlock::setDateTime(string date, string time)
 //
 // ----- Information for the OTHER waiting sessions -----
 //==============================================================================
-bool oraDeadlock::extractDeadlockGraph(oraTraceFile &traceFile)
+bool oraDeadlock::extractDeadlockGraph()
 {
-    // Date and time of this deadlock.
-    string deadlockTime = traceFile.previousLine();
-    mDate = deadlockTime.substr(4, 10);
-    mTime = deadlockTime.substr(15, 8);
+    // Extract the Date and time of this deadlock.
+    // *** 2018-12-19 15:42:20.941....
+    string deadlockTime = mTraceFile->previousLine();
+    auto pos = deadlockTime.find(' ');
+    auto pos2 = deadlockTime.find(' ', pos + 1);
+    mDate = deadlockTime.substr(pos + 1, pos2 - pos -1);
+    mTime = deadlockTime.substr(pos2 + 1, 8);
 
     // Find the deadlock graph...
-    if (!traceFile.findDeadlockGraph()) {
+    if (!mTraceFile->findDeadlockGraph()) {
         return false;
     }
 
@@ -116,7 +121,8 @@ TX-00360007-001b448f       779    2156     X            985     272           S
 */
 
     // Find the resources in the deadlock.
-    if (!traceFile.findAtStart("Resource Name")) {
+    if (!mTraceFile->findAtStart("Resource Name")) {
+        cerr << "Cannot find [Resource Name]" << endl;
         return false;
     }
 
@@ -126,8 +132,8 @@ TX-00360007-001b448f       779    2156     X            985     272           S
     // And a signature.
     string signature;
 
-    deadlockTime = traceFile.readLine();
-    while (traceFile.good()) {
+    deadlockTime = mTraceFile->readLine();
+    while (mTraceFile->good()) {
         // The resources end at a one-space line.
         if (deadlockTime == " ") {
             break;
@@ -175,7 +181,6 @@ TX-00360007-001b448f       779    2156     X            985     272           S
             mSignatures.push_back(signature);
         }
 
-
         // Save the blocker's details.
         auto ok = mBlockers.insert(pair<unsigned, oraBlockerWaiter>(tempBlocker.session(), tempBlocker));
         if (!ok.second) {
@@ -189,11 +194,11 @@ TX-00360007-001b448f       779    2156     X            985     272           S
         }
 
         // Average White Band time ... let's go round again!
-        deadlockTime = traceFile.readLine();
+        deadlockTime = mTraceFile->readLine();
     }
 
     // Skip over the session stuff, not interesting at all.
-    if (!traceFile.findAtStart("Rows waited on:")) {
+    if (!mTraceFile->findAtStart("Rows waited on:")) {
         return false;
     }
 
@@ -210,9 +215,9 @@ Rows waited on:
   (dictionary objn - 5004374, file - 1024, block - 243390651, slot - 0)
 */
 
-    while (traceFile.good()) {
+    while (mTraceFile->good()) {
         //  Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
-        deadlockTime = traceFile.readLine();
+        deadlockTime = mTraceFile->readLine();
 
         // The Rows waited on end at a one-space line.
         if (deadlockTime == " ") {
@@ -235,7 +240,7 @@ Rows waited on:
         waiterPair->second.setRowidWait(tempString);
 
         //  (dictionary objn - 5004374, file - 1024, block - 243378437, slot - 0)
-        deadlockTime = traceFile.readLine();
+        deadlockTime = mTraceFile->readLine();
 
         pos = deadlockTime.find("objn - ");
         tempNumber = stoi(deadlockTime.substr(pos +7));
@@ -254,7 +259,26 @@ Rows waited on:
         waiterPair->second.setSlot(tempNumber);
     }
 
-    return traceFile.good();
+        // Scan for the reason we are waiting, it's in the process state.
+        if (!mTraceFile->findAtStart("PROCESS STATE")) {
+            cerr << "Cannot find [PROCESS STATE]" << endl;
+            return false;
+        }
+
+        // Scan to a line with the "current wait stack" in it.
+        if (!mTraceFile->findNearStart("Current Wait Stack:")) {
+            cerr << "Cannot find [Current Wait Stack:]" << endl;
+            return false;
+        }
+
+        // Now we have a look for the reason we deadlocked this session.
+        mTraceFile->readLine();
+        deadlockTime = mTraceFile->trimmedLine();
+        setDeadlockWait(deadlockTime.substr(3));
+
+
+
+    return mTraceFile->good();
 }
 
 //==============================================================================

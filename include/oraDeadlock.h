@@ -41,28 +41,14 @@ class oraTraceFile;
 class oraDeadlock
 {
     public:
-        oraDeadlock(unsigned lineNumber);
+        oraDeadlock(oraTraceFile *tf);
         virtual ~oraDeadlock();
-
-    protected:
-
-    private:
-        unsigned mLineNumber;
-        string mDate;
-        string mTime;
-        map<unsigned, oraBlockerWaiter>mBlockers;
-        map<unsigned, oraBlockerWaiter>mWaiters;
-        vector<string> mSignatures;
-        bool sigType(const string what);
-
-
-    public:
+        bool extractDeadlockGraph();
         unsigned lineNumber() { return mLineNumber; }
         void setDateTime(string date, string time);
         string date() { return mDate; }
         string time() { return mTime; }
         string dateTime() { return "on " + mDate + " at " + mTime; }
-        bool extractDeadlockGraph(oraTraceFile &traceFile);
         friend ostream& operator<<(ostream &out, const oraDeadlock &dl);
         vector<string> *signatures();
         map<unsigned, oraBlockerWaiter> *blockers();
@@ -72,7 +58,19 @@ class oraDeadlock
         bool txxs();    // Bitmap Index? ITL? PK/UK inconsistency?
         bool ul();      // User defined lock;
         bool tm();      // Missing FK index?
+        void setDeadlockWait(string reason) { mDeadlockWait = reason; }
+        string deadlockWait() { return mDeadlockWait; }
 
+    private:
+        oraTraceFile *mTraceFile;
+        unsigned mLineNumber;
+        string mDate;
+        string mTime;
+        map<unsigned, oraBlockerWaiter>mBlockers;
+        map<unsigned, oraBlockerWaiter>mWaiters;
+        vector<string> mSignatures;
+        bool sigType(const string what);
+        string mDeadlockWait;
 };
 
 #endif // ORADEADLOCK_H

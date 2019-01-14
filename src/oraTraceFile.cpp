@@ -31,7 +31,8 @@ using std::endl;
 //==============================================================================
 //                                                                   Constructor
 //==============================================================================
-oraTraceFile::oraTraceFile(string traceFileName)
+oraTraceFile::oraTraceFile(string traceFileName):
+    mTraceName(traceFileName)
 {
     mIFS = nullptr;
     mLineNumber = 0;
@@ -42,6 +43,7 @@ oraTraceFile::oraTraceFile(string traceFileName)
     mSystemName.reserve(20);
     mOracleHome.reserve(120);
     mServerName.reserve(20);
+    mDeadlocks.reserve(10);
 
 
     mIFS = new ifstream(traceFileName);
@@ -113,6 +115,53 @@ void oraTraceFile::initialise()
 }
 
 //==============================================================================
+//                                                            findAllDeadlocks()
+//------------------------------------------------------------------------------
+// Finds and extracts all the deadlocks in the trace file and returns the
+// number found to the caller.
+//==============================================================================
+unsigned oraTraceFile::findAllDeadlocks()
+{
+    unsigned deadlockCount = 0;
+    while (mIFS->good()) {
+        // Look for another deadlock.
+        if (findDeadlock()) {
+            std::cerr << "Found a new deadlock at line " << mLineNumber << std::endl;
+            deadlockCount++;
+
+            // Create a new deadlock and get it to extract its own details.
+            oraDeadlock temp(this);
+            temp.extractDeadlockGraph();
+            mDeadlocks.push_back(temp);
+
+            // Debug:
+            std::cerr << "Deadlock: " << deadlockCount << '\n'
+                 << temp << std::endl << std::endl;
+
+
+        }
+    }
+
+    return deadlockCount;
+}
+
+
+//==============================================================================
+//                                                                    deadLock()
+//------------------------------------------------------------------------------
+// Returns a pointer to a single deadlock.
+//==============================================================================
+oraDeadlock *oraTraceFile::deadLock(unsigned index)
+{
+    if (index > mDeadlocks.size() - 1) {
+        // Oops! Out of range.
+        return nullptr;
+    }
+
+    return &(mDeadlocks.at(index));
+}
+
+//==============================================================================
 //                                                                    readLine()
 //------------------------------------------------------------------------------
 // Reads the next line from the tracefile. Makes sure that line numbers
@@ -150,6 +199,31 @@ bool oraTraceFile::findAtStart(const string lookFor)
             return true;
         }
     }
+
+    // Return error or EOF.
+    return mIFS->good();
+}
+
+//==============================================================================
+//                                                                 findAtStart()
+//------------------------------------------------------------------------------
+// Looks for some text, case sensitive, at the start of the current
+// line from the trace file but with may be prefixed by whitespace.
+// If not found, this will keep reading lines until
+// it is found or we hit an error or EOF. Returns true if found.
+//==============================================================================
+bool oraTraceFile::findNearStart(const string lookFor)
+{
+    auto lookSize = lookFor.length();
+
+    while (mIFS->good()) {
+        readLine();
+        if (trimmedLine().substr(0, lookSize) == lookFor ) {
+            return true;
+        }
+    }
+
+    // Return error or EOF.
     return mIFS->good();
 }
 

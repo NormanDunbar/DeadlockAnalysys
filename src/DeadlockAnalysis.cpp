@@ -69,7 +69,7 @@ using std::vector;
 
 #include "oraTraceFile.h"
 #include "oraDeadlock.h"
-
+#include "oraDeadlockReport.h"
 
 
 
@@ -79,9 +79,10 @@ string programVersion = "0.1.0";
 string programAuthor = "Norman Dunbar";
 string authorEmail = "norman@dunbar-it.co.uk";
 
-#define ERR_INVALID_PARAMS    1
-#define ERR_INVALID_TRACEFILE 2
-#define ERR_TRACEFILE_ERROR   3
+#define ERR_INVALID_PARAMS     1
+#define ERR_INVALID_TRACEFILE  2
+#define ERR_TRACEFILE_ERROR    3
+#define ERR_INVALID_REPORTFILE 4
 
 //==============================================================================
 //                                                                       USAGE()
@@ -122,78 +123,18 @@ int main(int argc, char *argv[])
         usage(ERR_INVALID_TRACEFILE, "Cannot open tracefile " + string(argv[1]));
     }
 
-    // Display the trace file details.
-    cerr << "Tracefile Details:\n"
-         << "=================\n\n"
-         << traceFile << endl;
-
     // Do we have any deadlocks?
-    vector<oraDeadlock> deadlocks;
-    while (traceFile.findDeadlock()) {
-        oraDeadlock temp(traceFile.lineNumber());
-        if (temp.extractDeadlockGraph(traceFile)) {
-            // We can never hit EOF while extracting the deadlock graph
-            // unless, of course, someone has been playing with the trace file.
-            deadlocks.push_back(temp);
-        } else {
-            // Extract failed, somehow. Was it an error or EOF?
-            if (!traceFile.eof()) {
-                cerr << programName << ": Cannot extract deadlock graph" << endl;
-                exit(ERR_TRACEFILE_ERROR);
-            }
-        }
-    }
-
     cerr << "Extraction complete.\n"
-         << "There were " << deadlocks.size()
+         << "There were " << traceFile.parse()
          << " deadlock(s) found.\n\n";
 
-    // List deadlocks in trace file.
-    cerr << "DEADLOCKS:\n"
-         << "=========\n\n";
-
-    unsigned dl = 0;
-    for (auto i = deadlocks.begin(); i != deadlocks.end(); i++) {
-        cerr << "Deadlock: " << dl << '\n'
-             << "---------\n";
-
-        vector<string> *sigs = i->signatures();
-        for (auto j = (*sigs).begin(); j != (*sigs).end(); j++) {
-            cerr << "Signature(s): " << *j << '\n';
-        }
-
-        // What did we get?
-        if (i->txxx()) {
-            if (i->rows() > 1) {
-                cerr << "*** Probably an APPLICATION Deadlock.\n";
-            } else {
-                cerr << "*** Probably an SELF DEADLOCK Deadlock.\n";
-            }
-        }
-
-        if (i->txxs()) {
-            if (i->rows() > 1) {
-                cerr << "*** Probably an BITMAP INDEX/ITL/PK or UK inconsistency Deadlock.\n";
-            } else {
-                cerr << "*** UNKNOWN TXXS Deadlock. Inform Norm!\n";
-            }
-        }
-
-        if (i->tm()) {
-            if (i->rows() > 1) {
-                cerr << "*** Probably MISSING FK INDEX Deadlock.\n";
-            } else {
-                cerr << "*** UNKNOWN TM Deadlock. Inform Norm!\n";
-            }
-        }
-
-        if (i->ul()) {
-            cerr << "*** Definitely a USER DEFINED LOCK Deadlock.\n";
-        }
-
-        cerr << *i << endl;
+    // Build the report.
+    oraDeadlockReport reportFile(&traceFile);
+    if (reportFile.good()) {
+        reportFile.report();
+    } else {
+        usage(ERR_INVALID_REPORTFILE, "Cannot create report file " + reportFile.reportName());
     }
 
-    deadlocks.clear();
     return 0;
 }

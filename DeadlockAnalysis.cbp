@@ -40,10 +40,12 @@
 		</Compiler>
 		<Unit filename="include/oraBlockerWaiter.h" />
 		<Unit filename="include/oraDeadlock.h" />
+		<Unit filename="include/oraDeadlockReport.h" />
 		<Unit filename="include/oraTraceFile.h" />
 		<Unit filename="src/DeadlockAnalysis.cpp" />
 		<Unit filename="src/oraBlockerWaiter.cpp" />
 		<Unit filename="src/oraDeadlock.cpp" />
+		<Unit filename="src/oraDeadlockReport.cpp" />
 		<Unit filename="src/oraTraceFile.cpp" />
 		<Extensions>
 			<code_completion />
