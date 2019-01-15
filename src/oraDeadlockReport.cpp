@@ -119,7 +119,7 @@ void oraDeadlockReport::createCSSFile()
         *cssFS << "pre {\n"
                << "    white-space: pre-wrap;\n"
                << "    word-break: keep-all;\n"
-               << "    font-size: larger;\n"
+               << "    font-family: \"courier new\";\n"
                << "}\n\n";
 
         *cssFS << "th {\n"
@@ -127,8 +127,43 @@ void oraDeadlockReport::createCSSFile()
                << "    color: maroon;\n"
                << "}\n\n";
 
+        *cssFS << ".number {\n"
+               << "    text-align: right;\n"
+               << "}\n\n";
+
+        *cssFS << ".left {\n"
+               << "    text-align: left;\n"
+               << "}\n\n";
+
+        *cssFS << ".middle {\n"
+               << "    text-align: middle;\n"
+               << "}\n\n";
+
         *cssFS << ".right {\n"
                << "    text-align: right;\n"
+               << "}\n\n";
+
+        *cssFS << ".th_tiny {\n"
+               << "    width: 10%;\n"
+               << "}\n\n";
+
+        *cssFS << ".th_small {\n"
+               << "    width: 12%;\n"
+               << "}\n\n";
+
+        *cssFS << ".th_medium {\n"
+               << "    width: 20%;\n"
+               << "}\n\n";
+
+        *cssFS << ".th_large {\n"
+               << "    width: 40%;\n"
+               << "}\n\n";
+
+        *cssFS << "ul {\n"
+               << "    font-size: 0.7em;\n"
+               << "}\n\n";
+
+        *cssFS << "li {\n"
                << "}\n\n";
 
         *cssFS << ".th_small {\n"
@@ -177,7 +212,24 @@ void oraDeadlockReport::createCSSFile()
                << ".nonZero {\n"
                << "    color: red;\n"
                << "    font-weight: bold;\n"
-               << "}\n" << endl;
+               << "}\n\n";
+
+        *cssFS << "/*\n"
+               << " * Footer Stuff\n"
+               << " */\n";
+
+        *cssFS << ".footer {\n"
+               << "    text-align: center;\n"
+               << "    font-size: x-small;\n"
+               << "}\n\n";
+
+        *cssFS << ".url {\n"
+               << "    color: blue;\n"
+               << "    font-family: \"courier new\";\n"
+               << "}\n";
+
+        // Flush.
+        *cssFS << endl;
     }
 }
 
@@ -203,6 +255,22 @@ void oraDeadlockReport::reportHeader()
 //==============================================================================
 void oraDeadlockReport::reportFooter()
 {
+    extern string programName;
+    extern string programVersion;
+    extern string programAuthor;
+
+    *mOFS << "<p></p>\n<hr>\n"
+          << "<p class=\"footer\">"
+          << "Created with <strong>" << programName << ' ' << programVersion
+          << "</strong><br>Copyright &copy; " << programAuthor << " 2018/19<br>\n"
+          << "Released under the <a href=\"https://opensource.org/licenses/MIT\"><span class=\"url\">MIT Licence</span></a><br><br>\n"
+          << "Binary releases available from: "
+          << "<a href=\"https://github.com/NormanDunbar/DeadlockAnalysys/releases\">"
+          << "<span class=\"url\">https://github.com/NormanDunbar/DeadlockAnalysys/releases</span></a><br>\n"
+          << "Source code available from: "
+          << "<a href=\"https://github.com/NormanDunbar/DeadlockAnalysys\">"
+          << "<span class=\"url\">https://github.com/NormanDunbar/DeadlockAnalysys</span></a>\n\n";
+
     *mOFS << "</body>\n"
              "</html>" << endl;
 }
@@ -233,6 +301,19 @@ void oraDeadlockReport::reportBody()
 void oraDeadlockReport::traceFileDetails()
 {
     heading(1, "Deadlock Analysis");
+    heading(2, "Tracefile Summary");
+
+    // Open the table.
+    *mOFS << "<table  style=\"width:95%\">\n";
+
+    // Local trace file name.
+    *mOFS << "<tr><th class=\"right th_small\">Trace File</th>"
+          << "<td id=\"TraceFile\">"
+          << mTraceFile->traceName()
+          << "</td></tr>\n";
+
+    // Close the table.
+    *mOFS << "</table><br>\n\n";
 
     // Open the table.
     *mOFS << "<table  style=\"width:95%\">\n";
@@ -290,7 +371,7 @@ void oraDeadlockReport::traceFileDetails()
 //==============================================================================
 void oraDeadlockReport::quickIndex()
 {
-    heading(2, "Deadlock Summary");
+    heading(2, "Deadlock Details");
     heading(3, "Quick Index");
 
     *mOFS << "<ul>\n";
@@ -314,75 +395,18 @@ void oraDeadlockReport::deadlocks()
     for (unsigned x = 0; x < mTraceFile->deadlockCount(); x++) {
         oraDeadlock *thisDeadlock = mTraceFile->deadLock(x);
 
+        // Open the div.
         *mOFS << "<div id=\"deadlock_" << x + 1 << "\">\n";
         heading(3, "Deadlock " + to_string(x + 1));
 
-        // Open the table.
-        *mOFS << "<table  style=\"width:95%\">\n";
+        // Deadlock summary first.
+        deadlockSummary(thisDeadlock);
 
-        // Line number.
-        *mOFS << "<tr><th class=\"right th_small\">Line Number</th>"
-              << "<td class=\"number\">"
-              << thisDeadlock->lineNumber()
-              << "</td></tr>\n";
+        // Deadlock graph.
+        deadlockGraph(thisDeadlock);
 
-        // Sessions involved in the deadlock.
-        *mOFS << "<tr><th class=\"right th_small\">Sessions involved</th>"
-              << "<td class=\"number\">"
-              << thisDeadlock->rows()
-              << "</td></tr>\n";
-
-        // Deadlock wait reason.
-        *mOFS << "<tr><th class=\"right th_small\">Deadlock Wait</th>"
-              << "<td id=\"DeadlockWait\">"
-              << thisDeadlock->deadlockWait()
-              << "</td></tr>\n";
-
-        // Deadlock signature.
-        *mOFS << "<tr><th class=\"right th_small\">Deadlock Signature</th>"
-              << "<td id=\"DeadlockSignature\">";
-
-              for (unsigned s = 0; s < thisDeadlock->signatures()->size() - 1; x++) {
-                  *mOFS << thisDeadlock->signatures()->at(x)
-                        << "<br>";
-              }
-
-        *mOFS << "</td></tr>\n";
-
-        // Probable cause.
-        string signature;
-        string reason;
-        *mOFS << "<tr><th class=\"right th_small\">Probable Cause</th>"
-              << "<td id=\"DeadlockCause\">";
-
-        if (thisDeadlock->ul()) {
-            *mOFS << "UL: User defined locking - you are, unfortunately, on your own!<br>\n";
-        }
-
-        if (thisDeadlock->txxs()) {
-            *mOFS << "TX-X-S: Insufficient ITL entries (docId 1552191.1); or<br>\n"
-                  << "TX-X-S: Bitmap indexes (docId 1552175.1); or<br>\n"
-                  << "TX-X-S: Manipulation primary/unique key in an inconsistent order (docId 1552191.1).<br>\n";
-        }
-
-        if (thisDeadlock->tm()) {
-            *mOFS << "TM: Unindexed FK constraint columns (docId 1552169.1).<br>\n";
-        }
-
-        if (thisDeadlock->txxx()) {
-            if (thisDeadlock->rows() == 1) {
-                *mOFS << "TX-X-X: Self deadlock - with an autonomous transaction (docId 1552173); or<br>\n"
-                      << "TX-X-X: Self deadlock - without an autonomous transaction (docId 1552123).<br>\n";
-            } else {
-                *mOFS << "TX-X-X: Deadlock caused by application code (docId 1552120.1).<br>\n";
-            }
-        }
-
-
-        *mOFS << "</td></tr>\n";
-
-        // Close the table.
-        *mOFS << "</table>\n";
+        // Waiter details.
+        deadlockWaiters(thisDeadlock);
 
         // Close the div.
         *mOFS << "</div>\n" << endl;
@@ -390,25 +414,232 @@ void oraDeadlockReport::deadlocks()
 }
 
 //==============================================================================
+//                                                             deadlockSummary()
+//------------------------------------------------------------------------------
+// Dumps out a summary of a single deadlock.
+//==============================================================================
+void oraDeadlockReport::deadlockSummary(oraDeadlock *dl)
+{
+    heading(4, "Deadlock Summary");
+    // Open the table.
+    *mOFS << "<table  style=\"width:95%\">\n";
+
+    // Line number.
+    *mOFS << "<tr><th class=\"right th_small\">Line Number</th>"
+          << "<td class=\"left\">"
+          << dl->lineNumber()
+          << "</td></tr>\n";
+
+    // Sessions involved in the deadlock.
+    *mOFS << "<tr><th class=\"right th_small\">Sessions involved</th>"
+          << "<td class=\"left\">"
+          << dl->rows()
+          << "</td></tr>\n";
+
+    // Deadlock wait reason.
+    *mOFS << "<tr><th class=\"right th_small\">Deadlock Wait</th>"
+          << "<td id=\"DeadlockWait\">"
+          << dl->deadlockWait()
+          << "</td></tr>\n";
+
+    // Deadlock signature.
+    *mOFS << "<tr><th class=\"right th_small\">Deadlock Signature</th>"
+          << "<td id=\"DeadlockSignature\">";
+
+          for (unsigned s = 0; s < dl->signatures()->size(); s++) {
+              *mOFS << dl->signatures()->at(s)
+                    << "<br>";
+          }
+
+    *mOFS << "</td></tr>\n";
+
+    // Probable cause.
+    bool gotCause = false;
+    *mOFS << "<tr><th class=\"right th_small\">Probable Cause</th>"
+          << "<td id=\"DeadlockCause\">";
+
+    if (dl->ul()) {
+        gotCause = true;
+        *mOFS << "UL: User defined locking - you are, unfortunately, on your own!<br>\n"
+              << "    Check for inappropriate use of DBMS_LOCK, perhaps, or LOCK TABLE.<br>\n";
+    }
+
+    if (dl->txxs()) {
+        gotCause = true;
+        *mOFS << "TX-X-S: Insufficient ITL entries (See docId 1552191.1); or,<br>\n"
+              << "TX-X-S: Bitmap indexes (See docId 1552175.1); or,<br>\n"
+              << "TX-X-S: Manipulation primary/unique key in an inconsistent order (See docId 1552191.1).<br>\n";
+    }
+
+    if (dl->tm()) {
+        gotCause = true;
+        *mOFS << "TM: Unindexed FK constraint columns (See docId 1552169.1).<br>\n";
+    }
+
+    if (dl->txxx()) {
+        gotCause = true;
+        if (dl->rows() == 1) {
+            *mOFS << "TX-X-X: Self deadlock - with an autonomous transaction (See docId 1552173); or,<br>\n"
+                  << "TX-X-X: Self deadlock - without an autonomous transaction (See docId 1552123).<br>\n";
+        } else {
+            *mOFS << "TX-X-X: Deadlock caused by application code (See docId 1552120.1).<br>\n";
+        }
+    }
+
+    if (!gotCause) {
+        *mOFS << "Deadlock cause unknown. Please zip and send this trace file - after obfuscating any personal "
+              << "data or server names, IP addresses, just in case - to Norm via Github as an issue "
+              << "and he'll attempt to find the cause and fix the code to avoid this in future.<br>\n"
+              << "The Issues URL is <a href=\"https://github.com/NormanDunbar/DeadlockAnalysys/issues\">"
+              << "<span class=\"url\">https://github.com/NormanDunbar/DeadlockAnalysys/issues</span></a>.<br>";
+    }
+    *mOFS << "</td></tr>\n";
+
+    // Aborted SQL
+    *mOFS << "<tr><th class=\"right th_small\">Aborted SQL</th>"
+          << "<td><pre>" << dl->SQL() << "</pre></td></tr>\n";
+
+    // Close the table.
+    *mOFS << "</table>\n";
+
+}
+
+//==============================================================================
+//                                                               deadlockGraph()
+//------------------------------------------------------------------------------
+// Dumps out details of a single deadlock graph.
+//==============================================================================
+void oraDeadlockReport::deadlockGraph(oraDeadlock *dl)
+{
+    heading(4, "Deadlock Graph");
+
+    // Open the table.
+    *mOFS << "<table  style=\"width:95%\">\n";
+
+    // Headings for table.
+    *mOFS << "<tr><th class=\"th_medium\">&nbsp;</th>"
+          << "<th colspan=4 class=\"th_large\">Blockers</th>"
+          << "<th colspan=4 class=\"th_large\">Waiters</th></tr>\n";
+
+    *mOFS << "<tr><th>Resource Name</th>";
+    for (unsigned x = 0; x < 2; x++) {
+        // Two sets of headings here.
+        *mOFS << "<th>Process</th>"
+              << "<th>Session</th>"
+              << "<th>Holding</th>"
+              << "<th>Waiting</th>";
+    }
+    *mOFS << "</tr>\n";
+
+    // Process all the blockers, and whoever is waiting for them.
+    for (unsigned x = 0; x < dl->rows(); x++) {
+        oraBlockerWaiter *b = dl->blockerByIndex(x);
+
+        if (b) {
+            // Get the waiter for this blocker.
+            oraBlockerWaiter *w = dl->waiterBySession(b->otherSession());
+
+            // Resource name.
+            *mOFS << "<tr><td>" << b->resourceName() << "</td>\n";
+
+            // Blocker details
+            *mOFS << "<td class=\"middle\">" << b->process() << "</td>"
+                  << "<td class=\"middle\">" << b->session() << "</td>"
+                  << "<td class=\"middle\">" << (b->holds().empty() ? "&nbsp;" : b->holds()) << "</td>"
+                  << "<td class=\"middle\">" << (b->waits().empty() ? "&nbsp;" : b->waits()) << "</td>";
+
+            // Waiter details
+            *mOFS << "<td class=\"middle\">" << w->process() << "</td>"
+                  << "<td class=\"middle\">" << w->session() << "</td>"
+                  << "<td class=\"middle\">" << (w->holds().empty() ? "&nbsp;" : w->holds()) << "</td>"
+                  << "<td class=\"middle\">" << (w->waits().empty() ? "&nbsp;" : w->waits()) << "</td>";
+
+            *mOFS << "</tr>\n";
+        }
+
+    }
+
+    // Close the table.
+    *mOFS << "</table>\n";
+
+}
+
+//==============================================================================
+//                                                             deadlockWaiters()
+//------------------------------------------------------------------------------
+// Dumps out details of deadlock's waiters.
+//==============================================================================
+void oraDeadlockReport::deadlockWaiters(oraDeadlock *dl)
+{
+    heading(4, "Deadlock Waiters");
+
+    // Open the table.
+    *mOFS << "<table  style=\"width:95%\">\n";
+
+    // Headings.
+    *mOFS << "<tr><th class=\"th_medium\">Resource Name</th>"
+          << "<th class=\"th_tiny\">Session</th>"
+          << "<th class=\"th_tiny\">Blocker</th>"
+          << "<th class=\"th_medium\">Rowid Waited</th>"
+          << "<th class=\"th_tiny\">File No.</th>"
+          << "<th class=\"th_tiny\">Block No.</th>"
+          << "<th class=\"th_tiny\">Slot No.</th>"
+          << "<th class=\"th_tiny\">Object Id</th>\n";
+
+    *mOFS << "</tr>\n";
+
+    // Grab the waiters in the order they are in the deadlock graph
+    // so, basically, process the blockers and grab their waiting session.
+    for (unsigned x = 0; x < dl->rows(); x++) {
+        oraBlockerWaiter *b = dl->blockerByIndex(x);
+
+        if (b) {
+            // Get the waiter for this blocker.
+            oraBlockerWaiter *w = dl->waiterBySession(b->otherSession());
+
+            // Resource name.
+            *mOFS << "<tr><td class=\"left\">" << w->resourceName() << "</td>\n";
+
+            // Session.
+            *mOFS << "<td class=\"middle\">" << w->session() << "</td>\n";
+
+            // Blocker.
+            *mOFS << "<td class=\"middle\">" << w->otherSession() << "</td>\n";
+
+            // Rowid.
+            *mOFS << "<td class=\"middle\">" << w->rowidWait() << "</td>\n";
+
+            // File.
+            *mOFS << "<td class=\"middle\">" << w->file() << "</td>\n";
+
+            // Block.
+            *mOFS << "<td class=\"middle\">" << w->block() << "</td>\n";
+
+            // Slot.
+            *mOFS << "<td class=\"middle\">" << w->slot() << "</td>\n";
+
+            // Object Id.
+            *mOFS << "<td class=\"middle\">" << w->objectId() << "</td>\n";
+
+            // Close the row.
+            *mOFS << "</tr>\n";
+
+            //
+        }
+    }
+
+    // Close the table.
+    *mOFS << "</table>\n";
+
+}
+
+//==============================================================================
 //                                                                     heading()
 //------------------------------------------------------------------------------
 // Writes an HTML heading line of a given heading level.
 //==============================================================================
-void oraDeadlockReport::heading(unsigned level, string heading)
+void oraDeadlockReport::heading(const unsigned level, const string heading)
 {
     *mOFS << "<h" << level << '>' << heading << "</h" << level << ">\n" << endl;
 }
 
-/*
-<div id="deadlock_1">
-<h3>Deadlock 1</h3>
-
-<table  style="width:95%">
-<tr><th class="right th_small">Line Number        </th><td class="number">30</td></tr>
-<tr><th class="right th_small">Sessions involved  </th><td class="number">3</td></tr>
-<tr><th class="right th_small">Deadlock Wait      </th><td id="DeadlockWait">waiting for 'enq: TX - allocate ITL entry'</td></tr>
-<tr><th class="right th_small">Deadlock Signature </th><td id="DeadlockSignature">TX-X-S</td></tr>
-<tr><th class="right th_small">Probable Cause     </th><td id="DeadlockCause">BITMAP INDEX/ITL/PK or UK inconsistency Deadlock</td></tr>
-</table>
-</div>
-*/

@@ -1,0 +1,137 @@
+body {
+    background: ivory;
+    color: maroon;
+}
+
+table, th, td {
+    border: 1px solid bisque;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    vertical-align: top;
+}
+
+table {
+    border-collapse: collapse;
+    background: beige;
+    font-family: "courier new","lucida console",mono;
+    font-size: smaller;
+    /* If "fixed" is not used, the widths are ignored. Sigh */
+    /* So the <table> is hard coded as <table style="width:95%"> which I don't like. */
+    table-layout: fixed;
+    /* Margin is half of 100-95% to accommodate a 95% wide table. */
+    margin-left: 2.5%;
+}
+
+pre {
+    white-space: pre-wrap;
+    word-break: keep-all;
+    font-family: "courier new";
+}
+
+th {
+    background: burlywood;
+    color: maroon;
+}
+
+.number {
+    text-align: right;
+}
+
+.left {
+    text-align: left;
+}
+
+.middle {
+    text-align: middle;
+}
+
+.right {
+    text-align: right;
+}
+
+.th_tiny {
+    width: 10%;
+}
+
+.th_small {
+    width: 12%;
+}
+
+.th_medium {
+    width: 20%;
+}
+
+.th_large {
+    width: 40%;
+}
+
+ul {
+    font-size: 0.7em
+}
+
+li {
+}
+
+.th_small {
+    width: 12%;
+}
+
+/*
+ * Analysis Header details. 
+ * Feel free to modify these to suit your style requirements.
+ */
+#TraceFile {
+    font-weight: bold;
+}
+
+#SystemName {
+}
+
+#ServerName {
+}
+
+#OracleHome {
+}
+
+#InstanceName {
+    font-weight: bold;
+}
+
+#AnalysisResult {
+}
+
+#DeadlockWait {
+    font-weight: bold;
+}
+
+#DeadlockSignature {
+}
+
+#DeadlockCause {
+    color: red;
+    font-weight: bold;
+}
+
+/*
+ * If the analysis found deadlocks, change the highlighting.
+ */
+.nonZero {
+    color: red;
+    font-weight: bold;
+}
+
+/*
+ * Footer Stuff
+ */
+.footer {
+    text-align: center;
+    font-size: x-small;
+}
+
+.url {
+    color: blue;
+    font-family: "courier new";
+}
+

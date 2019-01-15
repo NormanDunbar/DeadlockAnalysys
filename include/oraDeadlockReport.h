@@ -61,7 +61,10 @@ class oraDeadlockReport
         void traceFileDetails();
         void quickIndex();
         void deadlocks();
-        void heading(unsigned level, string heading);
+        void deadlockSummary(oraDeadlock *dl);
+        void deadlockGraph(oraDeadlock *dl);
+        void deadlockWaiters(oraDeadlock *dl);
+        void heading(const unsigned level, const string heading);
         bool mCssExists;
 
 };

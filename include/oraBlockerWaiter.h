@@ -41,17 +41,17 @@ using std::endl;
 class oraBlockerWaiter
 {
     public:
-        oraBlockerWaiter(bool isWaiter = false);
+        oraBlockerWaiter(const bool isWaiter = false);
         virtual ~oraBlockerWaiter();
 
         string resourceName() { return mResourceName; }
-        void setResourceName(string val) { mResourceName = val; }
+        void setResourceName(const string val) { mResourceName = val; }
 
         unsigned session() { return mSession; }
-        void setSession(unsigned val) { mSession = val; }
+        void setSession(const unsigned val) { mSession = val; }
 
         unsigned process() { return mProcess; }
-        void setProcess(unsigned val) { mProcess = val; }
+        void setProcess(const unsigned val) { mProcess = val; }
 
         string holds() { return mHolds; }
         void setHolds(string val);
@@ -60,22 +60,22 @@ class oraBlockerWaiter
         void setWaits(string val);
 
         string rowidWait() { return mRowidWait; }
-        void setRowidWait(string val) { mRowidWait = val; }
+        void setRowidWait(const string val) { mRowidWait = val; }
 
         unsigned objectId() { return mObjectId; }
-        void setObjectId(unsigned val) { mObjectId = val; }
+        void setObjectId(const unsigned val) { mObjectId = val; }
 
         unsigned file() { return mFile; }
-        void setFile(unsigned val) { mFile = val; }
+        void setFile(const unsigned val) { mFile = val; }
 
         unsigned block() { return mBlock; }
-        void setBlock(unsigned val) { mBlock = val; };
+        void setBlock(const unsigned val) { mBlock = val; };
 
         unsigned slot() { return mSlot; }
-        void setSlot(unsigned val) { mSlot = val; }
+        void setSlot(const unsigned val) { mSlot = val; }
 
         unsigned otherSession() { return mOtherSession; }
-        void setOtherSession(unsigned val) { mOtherSession = val; }
+        void setOtherSession(const unsigned val) { mOtherSession = val; }
 
         friend ostream& operator<<(ostream &out, const oraBlockerWaiter &bw);
 

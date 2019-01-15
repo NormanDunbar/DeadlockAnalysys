@@ -117,16 +117,19 @@ int main(int argc, char *argv[])
         usage(ERR_INVALID_PARAMS, "No tracefile name supplied");
     }
 
-    // One parameter received, it's a trace file name, or better be.
+    // One parameter received, it's a trace file name, or better be ...
+    cerr << "Extraction begins...\n";
     oraTraceFile traceFile(argv[1]);
+
     if (!traceFile.good()) {
         usage(ERR_INVALID_TRACEFILE, "Cannot open tracefile " + string(argv[1]));
     }
 
-    // Do we have any deadlocks?
-    cerr << "Extraction complete.\n"
-         << "There were " << traceFile.parse()
-         << " deadlock(s) found.\n\n";
+    // Do we have any deadlocks? Parse the file to find out.
+
+    cerr << "There was/were " << traceFile.parse()
+         << " deadlock(s) found.\n"
+         << "Extraction complete.\n" << endl;
 
     // Build the report.
     oraDeadlockReport reportFile(&traceFile);

@@ -36,11 +36,15 @@ using std::string;
 using std::ifstream;
 using std::ostream;
 using std::vector;
+using std::getline;
+using std::ostream;
+using std::endl;
+using std::cerr;
 
 class oraTraceFile
 {
     public:
-        oraTraceFile(string traceFileName);
+        oraTraceFile(const string traceFileName);
         virtual ~oraTraceFile();
         unsigned parse() { return findAllDeadlocks(); }
         bool good() { return mIFS->good(); }
@@ -52,7 +56,7 @@ class oraTraceFile
         string serverName() { return mServerName; }
         friend ostream& operator<<(ostream &out, const oraTraceFile &tf);
         unsigned deadlockCount() { return mDeadlocks.size(); }
-        oraDeadlock *deadLock(unsigned index);
+        oraDeadlock *deadLock(const unsigned index);
 
         // OraDeadlock classes can access our privates! But other
         // applications, classes etc cannot.

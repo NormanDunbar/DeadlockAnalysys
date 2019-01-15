@@ -35,14 +35,16 @@ using std::find;
 //==============================================================================
 //                                                                   Constructor
 //==============================================================================
-oraDeadlock::oraDeadlock(oraTraceFile *tf)
+oraDeadlock::oraDeadlock(oraTraceFile *tf):
+    mTraceFile(tf)
 {
     // Get the line number.
-    mTraceFile = tf;
     mLineNumber = tf->lineNumber();
+
     // Preallocate strings.
     mDate.reserve(10);
     mTime.reserve(10);
+    mAbortedSQL.reserve(2048);
 
     // Allocate space for 5 strings.
     mSignatures.reserve(5);
@@ -64,7 +66,7 @@ oraDeadlock::~oraDeadlock()
 //------------------------------------------------------------------------------
 // Sets the deadlock's data and time as extracted from the tracefile.
 //==============================================================================
-void oraDeadlock::setDateTime(string date, string time)
+void oraDeadlock::setDateTime(const string date, const string time)
 {
     mDate = date;
     mTime = time;
@@ -140,25 +142,25 @@ TX-00360007-001b448f       779    2156     X            985     272           S
         }
 
         //Extract the blocking session's details.
-        signature = deadlockTime.substr(0, 2);
+        signature = deadlockTime.substr(0, 2) + '-';
 
         auto pos = deadlockTime.find(" ");
         tempBlocker.setResourceName(deadlockTime.substr(0, pos));
         tempBlocker.setProcess(stoi(deadlockTime.substr(23, 7)));
         tempBlocker.setSession(stoi(deadlockTime.substr(31, 7)));
         tempBlocker.setHolds(deadlockTime.substr(39, 5));
-        signature += tempBlocker.holds();
+        signature += (tempBlocker.holds().empty() ? "" : tempBlocker.holds());
         tempBlocker.setWaits(deadlockTime.substr(45, 5));
-        signature += tempBlocker.waits();
+        signature += (tempBlocker.waits().empty() ? "" : tempBlocker.waits());
 
         //Extract the waiting session's details.
         tempWaiter.setResourceName(tempBlocker.resourceName());
         tempWaiter.setProcess(stoi(deadlockTime.substr(52, 7)));
         tempWaiter.setSession(stoi(deadlockTime.substr(60, 7)));
         tempWaiter.setHolds(deadlockTime.substr(68, 5));
-        signature += tempWaiter.holds();
+        signature += '-' + (tempWaiter.holds().empty() ? "" : tempWaiter.holds());
         tempWaiter.setWaits(deadlockTime.substr(74, 5));
-        signature += tempWaiter.waits();
+        signature += (tempWaiter.waits().empty() ? "" : tempWaiter.waits());
 
         // Set the corresponding other session.
         tempBlocker.setOtherSession(tempWaiter.session());
@@ -227,9 +229,11 @@ Rows waited on:
         auto pos = deadlockTime.find(":");
         unsigned tempNumber = stoi(deadlockTime.substr(9, pos -1));
 
-        // Find the waiter session. If found, waiterPair->second is the Waiter.
-        auto waiterPair = mWaiters.find(tempNumber);
-        if (waiterPair == mWaiters.end()) {
+        // Find the waiter session.
+        auto thisWaiter = waiterBySession(tempNumber);
+
+        //auto waiterPair = mWaiters.find(tempNumber);
+        if (!thisWaiter) {
             // Not found, oops!
             cerr << "Cannot find waiting session: " << tempNumber << endl;
             return false;
@@ -237,27 +241,47 @@ Rows waited on:
 
         // Rowid waited on.
         string tempString = deadlockTime.substr(deadlockTime.length() -18, 18);
-        waiterPair->second.setRowidWait(tempString);
+        thisWaiter->setRowidWait(tempString);
 
         //  (dictionary objn - 5004374, file - 1024, block - 243378437, slot - 0)
         deadlockTime = mTraceFile->readLine();
 
         pos = deadlockTime.find("objn - ");
         tempNumber = stoi(deadlockTime.substr(pos +7));
-        waiterPair->second.setObjectId(tempNumber);
+        thisWaiter->setObjectId(tempNumber);
 
         pos = deadlockTime.find("file - ");
         tempNumber = stoi(deadlockTime.substr(pos +7));
-        waiterPair->second.setFile(tempNumber);
+        thisWaiter->setFile(tempNumber);
 
         pos = deadlockTime.find("block - ");
         tempNumber = stoi(deadlockTime.substr(pos +8));
-        waiterPair->second.setBlock(tempNumber);
+        thisWaiter->setBlock(tempNumber);
 
         pos = deadlockTime.find("slot - ");
         tempNumber = stoi(deadlockTime.substr(pos +7));
-        waiterPair->second.setSlot(tempNumber);
+        thisWaiter->setSlot(tempNumber);
     }
+
+        // Extract the aborted SQL statement.
+        if (!mTraceFile->findAtStart("----- Current SQL Statement")) {
+            cerr << "Cannot find [----- Current SQL Statement]" << endl;
+            return false;
+        }
+
+        mTraceFile->readLine();
+        while (true) {
+            unsigned length = mTraceFile->currentLine().size();
+            if (length >= 10) {
+                if (mTraceFile->currentLine().substr(0, 10) == "==========") {
+                    break;
+                }
+            }
+
+            mAbortedSQL += mTraceFile->currentLine();
+            mTraceFile->readLine();
+        }
+
 
         // Scan for the reason we are waiting, it's in the process state.
         if (!mTraceFile->findAtStart("PROCESS STATE")) {
@@ -271,7 +295,8 @@ Rows waited on:
             return false;
         }
 
-        // Now we have a look for the reason we deadlocked this session.
+        // Now we have a look for the reason we deadlocked this
+        // session which is on the following line.
         mTraceFile->readLine();
         deadlockTime = mTraceFile->trimmedLine();
         setDeadlockWait(deadlockTime.substr(3));
@@ -296,19 +321,100 @@ vector<string> *oraDeadlock::signatures()
 //------------------------------------------------------------------------------
 // Returns a pointer to the list of blockers for this deadlock.
 //==============================================================================
-map<unsigned, oraBlockerWaiter> *oraDeadlock::blockers()
-{
-    return &mBlockers;
-}
+//map<unsigned, oraBlockerWaiter> *oraDeadlock::blockers()
+//{
+//    return &mBlockers;
+//}
 
 //==============================================================================
 //                                                                     waiters()
 //------------------------------------------------------------------------------
 // Returns a pointer to the list of waiters for this deadlock.
 //==============================================================================
-map<unsigned, oraBlockerWaiter> *oraDeadlock::waiters()
+//map<unsigned, oraBlockerWaiter> *oraDeadlock::waiters()
+//{
+//    return &mWaiters;
+//}
+
+
+//==============================================================================
+//                                                            blockerBySession()
+//------------------------------------------------------------------------------
+// Returns a pointer to a blocking session.
+//==============================================================================
+oraBlockerWaiter *oraDeadlock::blockerBySession(const unsigned session)
 {
-    return &mWaiters;
+    auto b = mBlockers.find(session);
+    if (b != mBlockers.end()) {
+        return &(b->second);
+    }
+
+    return nullptr;
+}
+
+
+//==============================================================================
+//                                                             waiterBySession()
+//------------------------------------------------------------------------------
+// Returns a pointer to a waiting session.
+//==============================================================================
+oraBlockerWaiter *oraDeadlock::waiterBySession(const unsigned session)
+{
+    auto w = mWaiters.find(session);
+    if (w != mWaiters.end()) {
+        return &(w->second);
+    }
+
+    return nullptr;
+}
+
+//==============================================================================
+//                                                              blockerByIndex()
+//------------------------------------------------------------------------------
+// Returns a pointer to a blocking session. This is array type access to a map
+// which it seems is not specifically allowed without a key. B*gg*r! Have to be
+// sneaky now.
+//==============================================================================
+oraBlockerWaiter *oraDeadlock::blockerByIndex(const unsigned index)
+{
+    if (index >= mBlockers.size()) {
+        return nullptr;
+    }
+
+    unsigned currentIndex = 0;
+    for (auto i = mBlockers.begin(); i != mBlockers.end(); i++) {
+        if (currentIndex == index) {
+            return &(i->second);
+        }
+
+        currentIndex++;
+    }
+
+    return &(mBlockers[index]);
+}
+
+
+//==============================================================================
+//                                                               waiterByIndex()
+//------------------------------------------------------------------------------
+// Returns a pointer to a waiting session.
+//==============================================================================
+oraBlockerWaiter *oraDeadlock::waiterByIndex(const unsigned index)
+{
+    if (index > mWaiters.size()) {
+        return nullptr;
+    }
+
+    unsigned currentIndex = 0;
+    for (auto i = mWaiters.begin(); i != mWaiters.end(); i++) {
+        if (currentIndex == index) {
+            return &(i->second);
+        }
+
+        currentIndex++;
+    }
+
+    return &(mWaiters[index]);
 }
 
 //==============================================================================
@@ -329,12 +435,12 @@ bool oraDeadlock::sigType(const string what) {
 
 bool oraDeadlock::txxx()    // Application error? Self Deadlock?
 {
-    return sigType("TXXX");
+    return sigType("TX-X-X");
 }
 
 bool oraDeadlock::txxs()    // Bitmap Index? ITL? PK/UK inconsistency?
 {
-    return sigType("TXXS");
+    return sigType("TX-X-S");
 }
 
 bool oraDeadlock::ul()      // User defined lock;
@@ -344,7 +450,7 @@ bool oraDeadlock::ul()      // User defined lock;
 
 bool oraDeadlock::tm()      // Missing FK index?
 {
-    return sigType("TMSXSSXSXSSX");
+    return sigType("TM-SX-SSX-SX-SSX");
 }
 
 

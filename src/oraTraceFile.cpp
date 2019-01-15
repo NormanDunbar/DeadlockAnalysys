@@ -24,14 +24,11 @@
 
 #include "oraTraceFile.h"
 
-using std::getline;
-using std::ostream;
-using std::endl;
 
 //==============================================================================
 //                                                                   Constructor
 //==============================================================================
-oraTraceFile::oraTraceFile(string traceFileName):
+oraTraceFile::oraTraceFile(const string traceFileName):
     mTraceName(traceFileName)
 {
     mIFS = nullptr;
@@ -126,7 +123,7 @@ unsigned oraTraceFile::findAllDeadlocks()
     while (mIFS->good()) {
         // Look for another deadlock.
         if (findDeadlock()) {
-            std::cerr << "Found a new deadlock at line " << mLineNumber << std::endl;
+            cerr << "Found a new deadlock at line " << mLineNumber << endl;
             deadlockCount++;
 
             // Create a new deadlock and get it to extract its own details.
@@ -135,10 +132,8 @@ unsigned oraTraceFile::findAllDeadlocks()
             mDeadlocks.push_back(temp);
 
             // Debug:
-            std::cerr << "Deadlock: " << deadlockCount << '\n'
-                 << temp << std::endl << std::endl;
-
-
+            cerr << "Deadlock: " << deadlockCount << '\n'
+                 << temp << '\n' << std::endl;
         }
     }
 
@@ -151,7 +146,7 @@ unsigned oraTraceFile::findAllDeadlocks()
 //------------------------------------------------------------------------------
 // Returns a pointer to a single deadlock.
 //==============================================================================
-oraDeadlock *oraTraceFile::deadLock(unsigned index)
+oraDeadlock *oraTraceFile::deadLock(const unsigned index)
 {
     if (index > mDeadlocks.size() - 1) {
         // Oops! Out of range.
@@ -264,7 +259,8 @@ string oraTraceFile::trimmedLine()
 //==============================================================================
 ostream& operator<<(ostream &out, const oraTraceFile &tf)
 {
-    out << "Original Trace File: " << tf.mOriginalPath << '\n'
+    out << "Trace File:          " << tf.mTraceName << '\n'
+        << "Original Trace File: " << tf.mOriginalPath << '\n'
         << "System:              " << tf.mSystemName << '\n'
         << "Server name:         " << tf.mServerName << '\n'
         << "Oracle Home:         " << tf.mOracleHome << '\n'

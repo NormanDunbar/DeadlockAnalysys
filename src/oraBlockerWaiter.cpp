@@ -46,7 +46,7 @@ string leftTrim(string &s, const string what)
 //==============================================================================
 //                                                                   Constructor
 //==============================================================================
-oraBlockerWaiter::oraBlockerWaiter(bool isWaiter) :
+oraBlockerWaiter::oraBlockerWaiter(const bool isWaiter) :
     mIsWaiter(isWaiter)
 {
     mSession = 0;

@@ -45,21 +45,26 @@ class oraDeadlock
         virtual ~oraDeadlock();
         bool extractDeadlockGraph();
         unsigned lineNumber() { return mLineNumber; }
-        void setDateTime(string date, string time);
+        void setDateTime(const string date, const string time);
         string date() { return mDate; }
         string time() { return mTime; }
         string dateTime() { return "on " + mDate + " at " + mTime; }
         friend ostream& operator<<(ostream &out, const oraDeadlock &dl);
         vector<string> *signatures();
-        map<unsigned, oraBlockerWaiter> *blockers();
-        map<unsigned, oraBlockerWaiter> *waiters();
+        //map<unsigned, oraBlockerWaiter> *blockers();
+        //map<unsigned, oraBlockerWaiter> *waiters();
+        oraBlockerWaiter *blockerByIndex(const unsigned index);
+        oraBlockerWaiter *waiterByIndex(const unsigned index);
+        oraBlockerWaiter *blockerBySession(const unsigned session);
+        oraBlockerWaiter *waiterBySession(const unsigned session);
         unsigned rows() { return mBlockers.size(); }
         bool txxx();    // Application error? Self Deadlock?
         bool txxs();    // Bitmap Index? ITL? PK/UK inconsistency?
         bool ul();      // User defined lock;
         bool tm();      // Missing FK index?
-        void setDeadlockWait(string reason) { mDeadlockWait = reason; }
+        void setDeadlockWait(const string reason) { mDeadlockWait = reason; }
         string deadlockWait() { return mDeadlockWait; }
+        string SQL() { return mAbortedSQL; }
 
     private:
         oraTraceFile *mTraceFile;
@@ -71,6 +76,7 @@ class oraDeadlock
         vector<string> mSignatures;
         bool sigType(const string what);
         string mDeadlockWait;
+        string mAbortedSQL;
 };
 
 #endif // ORADEADLOCK_H
