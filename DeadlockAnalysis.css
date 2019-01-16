@@ -44,7 +44,7 @@ th {
 }
 
 .middle {
-    text-align: middle;
+    text-align: center;
 }
 
 .right {
@@ -67,15 +67,15 @@ th {
     width: 40%;
 }
 
+.th_small {
+    width: 12%;
+}
+
 ul {
-    font-size: 0.7em
+    font-size: 0.7em;
 }
 
 li {
-}
-
-.th_small {
-    width: 12%;
 }
 
 /*
@@ -112,6 +112,9 @@ li {
 #DeadlockCause {
     color: red;
     font-weight: bold;
+}
+
+#WaitStack {
 }
 
 /*

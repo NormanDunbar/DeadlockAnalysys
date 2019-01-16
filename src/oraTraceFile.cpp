@@ -128,7 +128,7 @@ unsigned oraTraceFile::findAllDeadlocks()
 
             // Create a new deadlock and get it to extract its own details.
             oraDeadlock temp(this);
-            temp.extractDeadlockGraph();
+            temp.extractDeadlock();
             mDeadlocks.push_back(temp);
 
             // Debug:

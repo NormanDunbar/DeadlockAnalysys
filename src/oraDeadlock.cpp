@@ -73,31 +73,46 @@ void oraDeadlock::setDateTime(const string date, const string time)
 }
 
 //==============================================================================
+//                                                             extractDeadlock()
+//------------------------------------------------------------------------------
+// Extracts relevant information from the tracefile for one deadlock.
+//==============================================================================
+bool oraDeadlock::extractDeadlock()
+{
+    if (!extractDeadlockGraph()) {
+        cerr << "Cannot extract deadlock graph.";
+        return false;
+    }
+
+    if (!extractRowsWaited()) {
+        cerr << "Cannot extract details of rows waited on.";
+        return false;
+    }
+
+    if (!extractCurrentSQL()) {
+        cerr << "Cannot extract current SQL statement.";
+        return false;
+    }
+
+    if (!extractProcessState()) {
+        cerr << "Cannot extract process state details.";
+        return false;
+    }
+
+    if (!extractWaitStack()) {
+        cerr << "Cannot extract process wait stack details.";
+        return false;
+    }
+
+
+    return true;
+}
+
+//==============================================================================
 //                                                        extractDeadlockGraph()
 //------------------------------------------------------------------------------
 // Extracts relevant information from the tracefile for each deadlock
-// found within. An example graph would resemble the following:
-//
-// Deadlock graph:
-//                        ---------Blocker(s)--------  ---------Waiter(s)---------
-// Resource Name          process session holds waits  process session holds waits
-// TX-0018001f-0025006a       985     272     X            821    1019           S
-// TX-0004000e-004a8a86       821    1019     X            779    2156           S
-// TX-00360007-001b448f       779    2156     X            985     272           S
-//
-// session 272: DID 0001-03D9-0000001A	session 1019: DID 0001-0335-00000004
-// session 1019: DID 0001-0335-00000004	session 2156: DID 0001-030B-00000004
-// session 2156: DID 0001-030B-00000004	session 272: DID 0001-03D9-0000001A
-//
-// Rows waited on:
-//   Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
-//   (dictionary objn - 5004374, file - 1024, block - 243378437, slot - 0)
-//   Session 1019: obj - rowid = 004C5C56 - AATFxWAQAAOgdrgAAA
-//   (dictionary objn - 5004374, file - 1024, block - 243391200, slot - 0)
-//   Session 2156: obj - rowid = 004C5C56 - AATFxWAQAAOgdi7AAA
-//   (dictionary objn - 5004374, file - 1024, block - 243390651, slot - 0)
-//
-// ----- Information for the OTHER waiting sessions -----
+// found within.
 //==============================================================================
 bool oraDeadlock::extractDeadlockGraph()
 {
@@ -114,13 +129,13 @@ bool oraDeadlock::extractDeadlockGraph()
         return false;
     }
 
-/*
-                       ---------Blocker(s)--------  ---------Waiter(s)---------
-Resource Name          process session holds waits  process session holds waits
-TX-0018001f-0025006a       985     272     X            821    1019           S
-TX-0004000e-004a8a86       821    1019     X            779    2156           S
-TX-00360007-001b448f       779    2156     X            985     272           S
-*/
+    /*
+                           ---------Blocker(s)--------  ---------Waiter(s)---------
+    Resource Name          process session holds waits  process session holds waits
+    TX-0018001f-0025006a       985     272     X            821    1019           S
+    TX-0004000e-004a8a86       821    1019     X            779    2156           S
+    TX-00360007-001b448f       779    2156     X            985     272           S
+    */
 
     // Find the resources in the deadlock.
     if (!mTraceFile->findAtStart("Resource Name")) {
@@ -199,6 +214,16 @@ TX-00360007-001b448f       779    2156     X            985     272           S
         deadlockTime = mTraceFile->readLine();
     }
 
+    return true;
+}
+
+//==============================================================================
+//                                                           extractRowsWaited()
+//------------------------------------------------------------------------------
+// Extracts the rows being waited on which caused the deadlock.
+//==============================================================================
+bool oraDeadlock::extractRowsWaited()
+{
     // Skip over the session stuff, not interesting at all.
     if (!mTraceFile->findAtStart("Rows waited on:")) {
         return false;
@@ -207,27 +232,27 @@ TX-00360007-001b448f       779    2156     X            985     272           S
     // Extract the objects waited on. I'm using a map<> as I can't guarantee
     // that the order they appear here will always match the creation order.
 
-/*
-Rows waited on:
-  Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
-  (dictionary objn - 5004374, file - 1024, block - 243378437, slot - 0)
-  Session 1019: obj - rowid = 004C5C56 - AATFxWAQAAOgdrgAAA
-  (dictionary objn - 5004374, file - 1024, block - 243391200, slot - 0)
-  Session 2156: obj - rowid = 004C5C56 - AATFxWAQAAOgdi7AAA
-  (dictionary objn - 5004374, file - 1024, block - 243390651, slot - 0)
-*/
+    /*
+    Rows waited on:
+      Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
+      (dictionary objn - 5004374, file - 1024, block - 243378437, slot - 0)
+      Session 1019: obj - rowid = 004C5C56 - AATFxWAQAAOgdrgAAA
+      (dictionary objn - 5004374, file - 1024, block - 243391200, slot - 0)
+      Session 2156: obj - rowid = 004C5C56 - AATFxWAQAAOgdi7AAA
+      (dictionary objn - 5004374, file - 1024, block - 243390651, slot - 0)
+    */
 
     while (mTraceFile->good()) {
         //  Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
-        deadlockTime = mTraceFile->readLine();
+        string traceLine = mTraceFile->readLine();
 
         // The Rows waited on end at a one-space line.
-        if (deadlockTime == " ") {
+        if (traceLine == " ") {
             break;
         }
 
-        auto pos = deadlockTime.find(":");
-        unsigned tempNumber = stoi(deadlockTime.substr(9, pos -1));
+        auto pos = traceLine.find(":");
+        unsigned tempNumber = stoi(traceLine.substr(9, pos -1));
 
         // Find the waiter session.
         auto thisWaiter = waiterBySession(tempNumber);
@@ -240,70 +265,136 @@ Rows waited on:
         }
 
         // Rowid waited on.
-        string tempString = deadlockTime.substr(deadlockTime.length() -18, 18);
+        string tempString = traceLine.substr(traceLine.length() -18, 18);
         thisWaiter->setRowidWait(tempString);
 
         //  (dictionary objn - 5004374, file - 1024, block - 243378437, slot - 0)
-        deadlockTime = mTraceFile->readLine();
+        traceLine = mTraceFile->readLine();
 
-        pos = deadlockTime.find("objn - ");
-        tempNumber = stoi(deadlockTime.substr(pos +7));
+        pos = traceLine.find("objn - ");
+        tempNumber = stoi(traceLine.substr(pos +7));
         thisWaiter->setObjectId(tempNumber);
 
-        pos = deadlockTime.find("file - ");
-        tempNumber = stoi(deadlockTime.substr(pos +7));
+        pos = traceLine.find("file - ");
+        tempNumber = stoi(traceLine.substr(pos +7));
         thisWaiter->setFile(tempNumber);
 
-        pos = deadlockTime.find("block - ");
-        tempNumber = stoi(deadlockTime.substr(pos +8));
+        pos = traceLine.find("block - ");
+        tempNumber = stoi(traceLine.substr(pos +8));
         thisWaiter->setBlock(tempNumber);
 
-        pos = deadlockTime.find("slot - ");
-        tempNumber = stoi(deadlockTime.substr(pos +7));
+        pos = traceLine.find("slot - ");
+        tempNumber = stoi(traceLine.substr(pos +7));
         thisWaiter->setSlot(tempNumber);
     }
 
-        // Extract the aborted SQL statement.
-        if (!mTraceFile->findAtStart("----- Current SQL Statement")) {
-            cerr << "Cannot find [----- Current SQL Statement]" << endl;
-            return false;
-        }
+    return true;
+}
 
-        mTraceFile->readLine();
-        while (true) {
-            unsigned length = mTraceFile->currentLine().size();
-            if (length >= 10) {
-                if (mTraceFile->currentLine().substr(0, 10) == "==========") {
-                    break;
-                }
+//==============================================================================
+//                                                           extractCurrentSQL()
+//------------------------------------------------------------------------------
+// Extracts the SQL statement that was aborted because of the deadlock.
+//==============================================================================
+bool oraDeadlock::extractCurrentSQL()
+{
+    // Extract the aborted SQL statement.
+    if (!mTraceFile->findAtStart("----- Current SQL Statement")) {
+        cerr << "Cannot find [----- Current SQL Statement]" << endl;
+        return false;
+    }
+
+    mTraceFile->readLine();
+    while (true) {
+        unsigned length = mTraceFile->currentLine().size();
+        if (length >= 10) {
+            if (mTraceFile->currentLine().substr(0, 10) == "==========") {
+                break;
             }
-
-            mAbortedSQL += mTraceFile->currentLine();
-            mTraceFile->readLine();
         }
 
-
-        // Scan for the reason we are waiting, it's in the process state.
-        if (!mTraceFile->findAtStart("PROCESS STATE")) {
-            cerr << "Cannot find [PROCESS STATE]" << endl;
-            return false;
-        }
-
-        // Scan to a line with the "current wait stack" in it.
-        if (!mTraceFile->findNearStart("Current Wait Stack:")) {
-            cerr << "Cannot find [Current Wait Stack:]" << endl;
-            return false;
-        }
-
-        // Now we have a look for the reason we deadlocked this
-        // session which is on the following line.
+        mAbortedSQL += mTraceFile->currentLine();
         mTraceFile->readLine();
-        deadlockTime = mTraceFile->trimmedLine();
-        setDeadlockWait(deadlockTime.substr(3));
+    }
 
+    return true;
+}
 
+//==============================================================================
+//                                                         extractProcessState()
+//------------------------------------------------------------------------------
+// Extracts the process state details for a deadlock.
+//==============================================================================
+bool oraDeadlock::extractProcessState()
+{
+    // Scan for the reason we are waiting, it's in the process state.
+    if (!mTraceFile->findAtStart("PROCESS STATE")) {
+        cerr << "Cannot find [PROCESS STATE]" << endl;
+        return false;
+    }
+
+    // Scan to a line with the "current wait stack" in it.
+    if (!mTraceFile->findNearStart("Current Wait Stack:")) {
+        cerr << "Cannot find [Current Wait Stack:]" << endl;
+        return false;
+    }
+
+    // Now we have a look for the reason we deadlocked this
+    // session which is on the following line.
+    mTraceFile->readLine();
+    string traceLine = mTraceFile->trimmedLine();
+    setDeadlockWait("W" + traceLine.substr(4));
 
     return mTraceFile->good();
+}
+
+
+//==============================================================================
+//                                                            extractWaitStack()
+//------------------------------------------------------------------------------
+// Extracts the aborted session's wait stack.
+//==============================================================================
+bool oraDeadlock::extractWaitStack()
+{
+    // Find it first I suppose.
+    if (!mTraceFile->findNearStart("Session Wait History:")) {
+        cerr << "Cannot find [Session Wait History:]" << endl;
+        return false;
+    }
+
+    // Scan the file looking for wait events or the end of the stack.
+    string traceLine;
+    string thisWait;
+    while (true) {
+        traceLine = mTraceFile->readLine();
+
+        // Done yet?
+        if (traceLine.find("    -------") == 0) {
+            break;
+        }
+
+        // Are we waiting?
+        auto pos = traceLine.find(": waited for");
+        if (pos != string::npos) {
+            // Found a wait.
+            thisWait = "W" + traceLine.substr(pos + 3);
+            continue;
+        }
+
+        // Look for the total time waited.
+        pos = traceLine.find("total=");
+        if (pos == string::npos) {
+            continue;
+        }
+
+        // We have the time waited.
+        thisWait += " for " + traceLine.substr(pos + 6) + "(s)";
+        mWaitStack.push_back(thisWait);
+
+    }
+
+    return mTraceFile->good();
+
 }
 
 //==============================================================================
@@ -314,6 +405,16 @@ Rows waited on:
 vector<string> *oraDeadlock::signatures()
 {
     return &mSignatures;
+}
+
+//==============================================================================
+//                                                                  signatures()
+//------------------------------------------------------------------------------
+// Returns a pointer to the list of signatures for this deadlock.
+//==============================================================================
+vector<string> *oraDeadlock::waitStack()
+{
+    return &mWaitStack;
 }
 
 //==============================================================================

@@ -43,7 +43,7 @@ class oraDeadlock
     public:
         oraDeadlock(oraTraceFile *tf);
         virtual ~oraDeadlock();
-        bool extractDeadlockGraph();
+        bool extractDeadlock();
         unsigned lineNumber() { return mLineNumber; }
         void setDateTime(const string date, const string time);
         string date() { return mDate; }
@@ -51,6 +51,7 @@ class oraDeadlock
         string dateTime() { return "on " + mDate + " at " + mTime; }
         friend ostream& operator<<(ostream &out, const oraDeadlock &dl);
         vector<string> *signatures();
+        vector<string> *waitStack();
         //map<unsigned, oraBlockerWaiter> *blockers();
         //map<unsigned, oraBlockerWaiter> *waiters();
         oraBlockerWaiter *blockerByIndex(const unsigned index);
@@ -74,7 +75,13 @@ class oraDeadlock
         map<unsigned, oraBlockerWaiter>mBlockers;
         map<unsigned, oraBlockerWaiter>mWaiters;
         vector<string> mSignatures;
+        vector<string>mWaitStack;
         bool sigType(const string what);
+        bool extractDeadlockGraph();
+        bool extractRowsWaited();
+        bool extractCurrentSQL();
+        bool extractProcessState();
+        bool extractWaitStack();
         string mDeadlockWait;
         string mAbortedSQL;
 };
