@@ -91,7 +91,7 @@ void usage(int errorCode, string errorText) {
     cerr << '\n'
          << programName << ": ERROR: " << errorText << "\n'\n"
          << "USAGE:\n"
-         << "\t" << programName << " tracefile_name >report_name\n"
+         << "\t" << programName << " tracefile_name [tracefile_name ...] \n"
          << endl;
 
     std::exit(errorCode);
@@ -101,6 +101,10 @@ void usage(int errorCode, string errorText) {
 
 //==============================================================================
 //                                                                        MAIN()
+//------------------------------------------------------------------------------
+// Start here. There should be one or more parameters representing a trace file
+// to be analysed. Each will be analysed and a report created for it, in the
+// same location as the trace file itself.
 //==============================================================================
 int main(int argc, char *argv[])
 {
@@ -113,30 +117,33 @@ int main(int argc, char *argv[])
          << endl;
 
     // There must be a single parameter.
-    if (argc != 2) {
-        usage(ERR_INVALID_PARAMS, "No tracefile name supplied");
+    if (argc < 2) {
+        usage(ERR_INVALID_PARAMS, "No tracefile name(s) supplied");
     }
 
-    // One parameter received, it's a trace file name, or better be ...
-    cerr << "Extraction begins...\n";
-    oraTraceFile traceFile(argv[1]);
+    // Parameter(s) received, analyse each as a trace file.
+    for (auto t = 1; t < argc; t++) {
+        cerr << argv[t] << '\n';
+        oraTraceFile traceFile(argv[t]);
 
-    if (!traceFile.good()) {
-        usage(ERR_INVALID_TRACEFILE, "Cannot open tracefile " + string(argv[1]));
-    }
+        if (!traceFile.good()) {
+            usage(ERR_INVALID_TRACEFILE, "\tCannot open tracefile " + string(argv[1]));
+        }
 
-    // Do we have any deadlocks? Parse the file to find out.
+        // Do we have any deadlocks? Parse the file to find out.
 
-    cerr << "There was/were " << traceFile.parse()
-         << " deadlock(s) found.\n"
-         << "Extraction complete.\n" << endl;
+        cerr << "\tThere was/were " << traceFile.parse()
+             << " deadlock(s) found.\n";
 
-    // Build the report.
-    oraDeadlockReport reportFile(&traceFile);
-    if (reportFile.good()) {
-        reportFile.report();
-    } else {
-        usage(ERR_INVALID_REPORTFILE, "Cannot create report file " + reportFile.reportName());
+        // Build the report.
+        oraDeadlockReport reportFile(&traceFile);
+        if (reportFile.good()) {
+            reportFile.report();
+        } else {
+            usage(ERR_INVALID_REPORTFILE, "Cannot create report file " + reportFile.reportName());
+        }
+
+        cerr << "Done.\n" << endl;
     }
 
     return 0;

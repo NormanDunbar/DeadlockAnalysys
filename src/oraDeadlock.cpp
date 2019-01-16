@@ -240,10 +240,16 @@ bool oraDeadlock::extractRowsWaited()
       (dictionary objn - 5004374, file - 1024, block - 243391200, slot - 0)
       Session 2156: obj - rowid = 004C5C56 - AATFxWAQAAOgdi7AAA
       (dictionary objn - 5004374, file - 1024, block - 243390651, slot - 0)
+
+    or, sometimems:
+
+    Rows waited on:
+      Session 97: no row
+      Session 1536: obj - rowid = 0001301E - AAMSDGAAFAOF0/UAAA
+      (dictionary objn - 77854, file - 5, block - 236408788, slot - 0)
     */
 
     while (mTraceFile->good()) {
-        //  Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
         string traceLine = mTraceFile->readLine();
 
         // The Rows waited on end at a one-space line.
@@ -251,10 +257,15 @@ bool oraDeadlock::extractRowsWaited()
             break;
         }
 
+        // Should be something like these:
+        //  Session 97: no row
+        //  Session 272: obj - rowid = 004C5C56 - AATFxWAQAAOgakFAAA
+
+        // Session Number of waiting session.
         auto pos = traceLine.find(":");
         unsigned tempNumber = stoi(traceLine.substr(9, pos -1));
 
-        // Find the waiter session.
+        // Find the oraBlockerWaiter for the session.
         auto thisWaiter = waiterBySession(tempNumber);
 
         //auto waiterPair = mWaiters.find(tempNumber);
@@ -264,7 +275,18 @@ bool oraDeadlock::extractRowsWaited()
             return false;
         }
 
-        // Rowid waited on.
+        // Fill in the waiter's details.
+
+        // Rowid waited on, or No Row.
+        if (traceLine.find("no row") != string::npos) {
+            // No *row* waited for.
+            thisWaiter->setRowidWait("No row waited for");
+
+            // There isn't a following line for this waiter, so
+            // process the next waiting session's row.
+            continue;
+        }
+
         string tempString = traceLine.substr(traceLine.length() -18, 18);
         thisWaiter->setRowidWait(tempString);
 

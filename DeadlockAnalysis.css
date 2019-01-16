@@ -1,10 +1,19 @@
+body {font: 90% Verdana, Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: rgb(95%,95%,80%);
+    color: black;
+}
+
+/*
 body {
     background: ivory;
     color: maroon;
 }
+*/
 
 table, th, td {
-    border: 1px solid bisque;
+    border: 1px solid rgb(85%,85%,70%);
     padding-left: 4px;
     padding-right: 4px;
     padding-top: 2px;
@@ -15,7 +24,7 @@ table, th, td {
 table {
     border-collapse: collapse;
     background: beige;
-    font-family: "courier new","lucida console",mono;
+    /*font-family: "courier new","lucida console",mono;*/
     font-size: smaller;
     /* If "fixed" is not used, the widths are ignored. Sigh */
     /* So the <table> is hard coded as <table style="width:95%"> which I don't like. */
@@ -31,8 +40,7 @@ pre {
 }
 
 th {
-    background: burlywood;
-    color: maroon;
+    background: rgb(90%,90%,75%);
 }
 
 .number {
@@ -136,5 +144,79 @@ li {
 .url {
     color: blue;
     font-family: "courier new";
+}
+
+
+/*
+ * Sidebar stuff to stay on screen during scrolling.
+ */
+/*-------------------------------------------------------------*
+ * This really screws IR5.5 - it scrolls and has huge gaps :o( *
+ * Also, having a fixed position navigation box, gives a dark  *
+ * line when the content is scrolled. A bottom border which is *
+ * the same colour as the background fixes that ! (ND)         *
+ *-------------------------------------------------------------*/
+ 
+div {
+    display: block;
+}
+
+div#entry {
+    padding-left: 15%;
+}
+
+div#sidebar {
+    position: fixed;
+    top: 8;
+    left: 4;
+    width: 10%;
+    margin: 0 0 0 2%;
+    text-align: center;
+    border-bottom: 1px solid rgb(95%,95%,80%);
+}
+
+#sidebar h4 {
+    border: 1px solid rgb(73%,73%,58%);
+    border-bottom: none;
+    background: rgb(90%,90%,75%);
+}
+
+#sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 2em;
+    border: 1px solid rgb(73%,73%,58%);
+    background: beige;
+}    
+
+#sidebar h4, #sidebar ul {
+    margin: 0 6px 0 0;
+}
+
+#sidebar li {
+    padding: 0.5em 0;
+    line-height: 1em;
+    border-bottom: 1px solid rgb(84%,84%,69%);
+}
+
+#sidebar a {
+    text-decoration: none;
+    padding: 0 0.25em;
+    border: 1px solid rgb(84%,84%,69%);
+    background: rgb(95%,95%,80%);
+    position: relative; top: 1em;
+}
+
+#sidebar a:link {
+    color: rgb(20%,40%,0%);
+}
+
+#sidebar a:visited {
+    color: rgb(58%,68%,40%);
+}
+
+#sidebar a:hover {
+    color: rgb(10%,20%,0%);
+    background: #FFF;
 }
 

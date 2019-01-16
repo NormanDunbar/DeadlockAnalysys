@@ -123,7 +123,7 @@ unsigned oraTraceFile::findAllDeadlocks()
     while (mIFS->good()) {
         // Look for another deadlock.
         if (findDeadlock()) {
-            cerr << "Found a new deadlock at line " << mLineNumber << endl;
+            cerr << "\tFound a deadlock at line " << mLineNumber << endl;
             deadlockCount++;
 
             // Create a new deadlock and get it to extract its own details.

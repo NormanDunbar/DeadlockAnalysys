@@ -32,6 +32,7 @@ oraDeadlockReport::oraDeadlockReport(oraTraceFile *traceFile):
     mTraceFile(traceFile)
 {
     string traceName = traceFile->traceName();
+    cerr << "\tReport file: " << traceName << '\n';
     auto pos = traceName.find_last_of('.');
 
     // Strip off the current extension and replace it with html.
