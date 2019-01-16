@@ -41,5 +41,6 @@ bin/*
 
 # My Test File(s)
 *.trc
-
+*.old.*
+test.*
 
