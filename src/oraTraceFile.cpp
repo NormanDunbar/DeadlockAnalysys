@@ -131,9 +131,9 @@ unsigned oraTraceFile::findAllDeadlocks()
             temp.extractDeadlock();
             mDeadlocks.push_back(temp);
 
-            // Debug:
-            cerr << "Deadlock: " << deadlockCount << '\n'
-                 << temp << '\n' << std::endl;
+            // Debug: Dumps out each deadlock at the end. Useful!
+            //cerr << "Deadlock: " << deadlockCount << '\n'
+            //     << temp << '\n' << std::endl;
         }
     }
 

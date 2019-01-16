@@ -563,10 +563,10 @@ bool oraDeadlock::tm()      // Missing FK index?
 // Used to dump out an oraDeadlock to a stream, for debugging/reporting.
 //==============================================================================
 ostream& operator<<(ostream &out, const oraDeadlock &dl) {
-    out << "Line Number:  " << dl.mLineNumber << '\n'
-        << "Date:         " << dl.mDate << '\n'
-        << "Time:         " << dl.mTime << '\n'
-        << "Blockers:     " << dl.mBlockers.size() << "\n\n";
+    out << "Line Number:   " << dl.mLineNumber << '\n'
+        << "Date:          " << dl.mDate << '\n'
+        << "Time:          " << dl.mTime << '\n'
+        << "Blockers:      " << dl.mBlockers.size() << "\n\n";
 
     // List the blockers.
     unsigned x = 0;
@@ -578,7 +578,7 @@ ostream& operator<<(ostream &out, const oraDeadlock &dl) {
     }
 
     // List the waiters.
-    out << "Waiters:     " << dl.mWaiters.size() << "\n\n";
+    out << "Waiters:      " << dl.mWaiters.size() << "\n\n";
     x = 0;
     for (auto i = dl.mWaiters.begin(); i != dl.mWaiters.end(); i++) {
         out << "\tWaiter: " << x << '\n'
@@ -586,6 +586,24 @@ ostream& operator<<(ostream &out, const oraDeadlock &dl) {
             << i->second << endl;
         x++;
     }
+
+    // List the signatures.
+    out << "Signature:    " << dl.mSignatures.size() << "\n\n";
+    x = 0;
+    for (auto i = dl.mSignatures.begin(); i != dl.mSignatures.end(); i++) {
+        out << "\tSignature " << x << ": " << *i << '\n';
+        x++;
+    }
+
+    // List the wait stack.
+    out << "\nWaits:       " << dl.mWaitStack.size() << "\n\n";
+    x = 0;
+    for (auto i = dl.mWaitStack.begin(); i != dl.mWaitStack.end(); i++) {
+        out << "\tWait: " << x << ": " << *i << '\n';
+        x++;
+    }
+
+    out << endl;
 
     return out;
 }
