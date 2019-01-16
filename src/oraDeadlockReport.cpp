@@ -77,6 +77,7 @@ void oraDeadlockReport::report()
     }
 
     reportHeader();
+    reportSidebar();
     reportBody();
     reportFooter();
 }
@@ -92,12 +93,14 @@ void oraDeadlockReport::createCSSFile()
 
     if (cssFS->good()) {
         *cssFS << "body {\n"
-               << "    background: ivory;\n"
-               << "    color: maroon;\n"
+               << "    margin: 0;\n"
+               << "    padding: 0;\n"
+               << "    background: rgb(95%, 95%, 80%);\n"
+               << "    color: black;\n"
                << "}\n\n";
 
         *cssFS << "table, th, td {\n"
-               << "    border: 1px solid bisque;\n"
+               << "    border: 1px solid rgb(85%,85%,70%);\n"
                << "    padding-left: 4px;\n"
                << "    padding-right: 4px;\n"
                << "    padding-top: 2px;\n"
@@ -108,24 +111,19 @@ void oraDeadlockReport::createCSSFile()
         *cssFS << "table {\n"
                << "    border-collapse: collapse;\n"
                << "    background: beige;\n"
-               << "    font-family: \"courier new\",\"lucida console\",mono;\n"
                << "    font-size: smaller;\n"
-               << "    /* If \"fixed\" is not used, the widths are ignored. Sigh */\n"
-               << "    /* So the <table> is hard coded as <table style=\"width:95%\"> which I don't like. */\n"
                << "    table-layout: fixed;\n"
-               << "    /* Margin is half of 100-95% to accommodate a 95% wide table. */\n"
-               << "    margin-left: 2.5%;\n"
+               << "    /* margin-left: 2.5%; */\n"
                << "}\n\n";
 
         *cssFS << "pre {\n"
                << "    white-space: pre-wrap;\n"
                << "    word-break: keep-all;\n"
-               << "    font-family: \"courier new\";\n"
+               << "    font: 100% mono;\n"
                << "}\n\n";
 
         *cssFS << "th {\n"
-               << "    background: burlywood;\n"
-               << "    color: maroon;\n"
+               << "    background: rgb(90%,90%,75%);\n"
                << "}\n\n";
 
         *cssFS << ".number {\n"
@@ -229,8 +227,73 @@ void oraDeadlockReport::createCSSFile()
 
         *cssFS << ".url {\n"
                << "    color: blue;\n"
-               << "    font-family: \"courier new\";\n"
-               << "}\n";
+               << "    font: mono;\n"
+               << "}\n\n";
+
+        *cssFS << "/* Sidebar stuff - stays still when scrolling */\n"
+               << "div {\n"
+               << "    display: block;\n"
+               << "}\n\n";
+
+        *cssFS << "div#entry {\n"
+               << "    padding-left: 15%;\n"
+               << "}\n\n";
+
+        *cssFS << "div#sidebar {\n"
+               << "    position: fixed;\n"
+               << "    top: 8;\n"
+               << "    left: 4;\n"
+               << "    width: 10%;\n"
+               << "    margin: 0 0 0 2;\n"
+               << "    text-align: center;\n"
+               << "    border-bottom: 1px solid rgb(95%,95%,80%);\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar h4 {\n"
+               << "    border: 1px solid rgb(73%,73%,58%);\n"
+               << "    border-bottom: none;\n"
+               << "    background: rgb(90%,90%,75%);\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar ul {\n"
+               << "    list-style: none;\n"
+               << "    margin: 0;\n"
+               << "    padding: 0 0 2em;\n"
+               << "    border: 1px solid rgb(73%,73%,58%);\n"
+               << "    background: beige;\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar h4, #sidebar ul {\n"
+               << "    margin: 0 6px 0 0;\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar li {\n"
+               << "    padding: 0.5em 0;\n"
+               << "    line-height: 1em;\n"
+               << "    border-bottom: 1px solid rgb(84%,84%,69%);\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar a {\n"
+               << "    text-decoration: none;\n"
+               << "    padding: 0 0.25em;\n"
+               << "    border: 1px solid rgb(84%,84%,69%);\n"
+               << "    background: rgb(95%,95%,80%);\n"
+               << "    position: relative; top: 1em;\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar a:link {\n"
+               << "   color: rgb(20%,40%,0%);\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar a:visited {\n"
+               << "   color: rgb(58%,68%,40%);\n"
+               << "}\n\n";
+
+        *cssFS << "#sidebar a:hover {\n"
+               << "   color: rgb(10%,20%,0%);\n"
+               << "   background: #FFF;\n"
+               << "}\n\n";
+
 
         // Flush.
         *cssFS << endl;
@@ -244,12 +307,32 @@ void oraDeadlockReport::createCSSFile()
 //==============================================================================
 void oraDeadlockReport::reportHeader()
 {
-    *mOFS << "<html>\n"
-             "<head>\n"
-             "<title>Deadlock Analysis</title>\n"
-             "<link rel=\"stylesheet\" href=\"DeadlockAnalysis.css\">\n"
-             "</head>\n"
-             "<body>" << endl;
+    *mOFS << "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\"\n\t"
+		  << "\thttp://www.w3.org/TR/REC-html40/loose.dtd\">"
+          << "<html>\n"
+          << "<head>\n"
+          << "<title>Deadlock Analysis</title>\n"
+          << "<link rel=\"stylesheet\" href=\"DeadlockAnalysis.css\">\n"
+          << "</head>\n"
+          << "<body>\n" << endl;
+}
+
+//==============================================================================
+//                                                               reportSidebar()
+//------------------------------------------------------------------------------
+// Writes the report index in the sidebar.
+//==============================================================================
+void oraDeadlockReport::reportSidebar()
+{
+    *mOFS << "<div id=\"sidebar\">\n"
+		  << "<h4>Contents</h4>\n"
+          << "<ul>\n";
+
+    // Write the index entries.
+    quickIndex();
+
+    *mOFS << "</ul>\n"
+          << "</div>\n" << endl;
 }
 
 //==============================================================================
@@ -275,8 +358,10 @@ void oraDeadlockReport::reportFooter()
           << "<a href=\"https://github.com/NormanDunbar/DeadlockAnalysys\">"
           << "<span class=\"url\">https://github.com/NormanDunbar/DeadlockAnalysys</span></a>\n</p>\n\n";
 
-    *mOFS << "</body>\n"
-             "</html>" << endl;
+    // Close main div and the report.
+    *mOFS << "</div>\n\n"
+          << "</body>\n"
+          << "</html>" << endl;
 }
 
 //==============================================================================
@@ -291,7 +376,7 @@ void oraDeadlockReport::reportFooter()
 void oraDeadlockReport::reportBody()
 {
     traceFileDetails();
-    quickIndex();
+    reportSidebar();
     deadlocks();
 }
 
@@ -303,7 +388,15 @@ void oraDeadlockReport::reportBody()
 //==============================================================================
 void oraDeadlockReport::traceFileDetails()
 {
+    // Main div and heading.
+    *mOFS << "<div id=\"entry\">\n\n";
+
     heading(1, "Deadlock Analysis");
+
+    // Link target.
+    *mOFS << "<a name=\"summary\"></a>";
+
+    // Sub heading.
     heading(2, "Tracefile Summary");
 
     // Open the table.
@@ -363,7 +456,8 @@ void oraDeadlockReport::traceFileDetails()
           << "<th class=\"right th_small\">Analysis</td>\n\t"
           << "<td id=\"AnalysisResult\" class=\""
           << (deadlockCount != 0 ? "nonZero" : "number")
-          << "\"> There were " << deadlockCount << " deadlock"
+          << "\"> There "
+          << (deadlockCount == 1 ? "was " : "were ") << deadlockCount << " deadlock"
           << (deadlockCount == 1 ? "" : "s")
           << " in the trace file"
           << "</td>\n</tr>\n";
@@ -382,21 +476,17 @@ void oraDeadlockReport::traceFileDetails()
 //==============================================================================
 void oraDeadlockReport::quickIndex()
 {
-    heading(2, "Deadlock Details");
-
     unsigned maxDeadlocks = mTraceFile->deadlockCount();
 
     if (maxDeadlocks > 1) {
-        heading(3, "Quick Index");
+        // There's always a summary.
+        *mOFS << "\t<li><a href=\"#summary\">Summary</a></li>\n";
 
-        *mOFS << "<ul>\n";
-
+        // Now the deadlocks themselves.
         for (unsigned x = 0; x < maxDeadlocks; x++) {
             *mOFS << "\t<li><a href=\"#deadlock_" << x + 1 << "\">"
                   << "Deadlock " << x + 1 << "</a></li>\n";
         }
-
-        *mOFS << "</ul>\n" << endl;
     }
 }
 
@@ -486,40 +576,65 @@ void oraDeadlockReport::deadlockSummary(oraDeadlock *dl)
 
     if (dl->ul()) {
         gotCause = true;
-        *mOFS << "\t\tUL: User defined locking - you are, unfortunately, on your own!<br>\n"
-              << "\t\t    Check for inappropriate use of DBMS_LOCK, perhaps, or LOCK TABLE.<br>\n";
+        *mOFS << "\t\t User defined locking - you are, unfortunately, on your own!<br><br>\n"
+              << "\t\t Check for inappropriate use of DBMS_LOCK, LOCK TABLE or SELECT FOR UPDATE.<br>\n";
     }
 
     if (dl->txxs()) {
         gotCause = true;
-        *mOFS << "\t\tTX-X-S: Insufficient ITL entries (See docId 1552191.1); or,<br>\n"
-              << "\t\tTX-X-S: Bitmap indexes (See docId 1552175.1); or,<br>\n"
-              << "\t\tTX-X-S: Manipulation primary/unique key in an inconsistent order (See docId 1552191.1).<br>\n";
+
+        // If we have " ITL " in the current wait, we know the reason.
+        if (dl->deadlockWait().find(" ITL ") != string::npos) {
+            *mOFS << "\t\t Insufficient ITL entries (See docId 1552191.1);<br><br>\n"
+                  << "\t\t Increase the INITRANS settings on the affected object (see below) and<br>\n"
+                  << "\t\t then <strong>ALTER <object_type> xxx MOVE;</strong> to make the change stick.<br>\n";
+        } else {
+            // It's either bitmap indexes or PK/UK manipulation gone wrong.
+            *mOFS << "\t\t Bitmap indexes (See docId 1552175.1);<br><br>\n"
+                  << "\t\t If the objects (see below) are bitmap indexes, then that's your problem.<br>\n"
+                  << "\t\t those should not be used in an OLTP or frequently updated system. Change them<br>\n"
+                  << "\t\t to normal type indexes and watch  the deadlocks vanish!<br><hr>\n"
+                  //
+                  << "\t\t Manipulation of primary/unique key in an inconsistent order (See docId 1552191.1).<br><br>\n"
+                  << "\t\t The code is, apparently, attempting to maintain numerous rows with the same Primary<br>\n"
+                  << "\t\t or Unique Key. Are you using sequence numbers based on a table, rather than on sequences?<br>\n"
+                  << "\t\t If one or more of the waiters is showing 'no rows' in the waited on rowid, and <br>\n"
+                  << "<strong>and</strong> at least one other is an index object, then this is <br>\n"
+                  << "\t\t the most likely cause of this type of deadlock.<br>\n";
+        }
     }
 
     if (dl->tm()) {
         gotCause = true;
-        *mOFS << "\t\tTM: Unindexed FK constraint columns (See docId 1552169.1).<br>\n";
+        *mOFS << "\t\t Unindexed FK constraint columns (See docId 1552169.1).<br><br>\n"
+              << "\t\t If a parent table's referenced column(s) can be deleted or updated<br>\n"
+              << "\t\t or, if the data are ever retrieved using a join between the parent and child<br>\n"
+              << "\t\t on the FK column(s), then the child table's FK column(s) must be indexed.<br>\n";
     }
 
     if (dl->txxx()) {
         gotCause = true;
         if (dl->rows() == 1) {
-            *mOFS << "\t\tTX-X-X: Self deadlock - with an autonomous transaction (See docId 1552173); or,<br>\n"
-                  << "\t\tTX-X-X: Self deadlock - without an autonomous transaction (See docId 1552123).<br>\n";
+            *mOFS << "\t\t Self deadlock - with an autonomous transaction (See docId 1552173); or,<br>\n"
+                  << "\t\t Self deadlock - without an autonomous transaction (See docId 1552123).<br><br>\n"
+                  << "\t\t The main code has fired off an autonomous transaction, perhaps, and that is waiting to<br>\n"
+                  << "\t\t update rows held by the main transaction. Fix the code to avoid this situation.<br>\n";
         } else {
-            *mOFS << "\t\tTX-X-X: Deadlock caused by application code (See docId 1552120.1).<br>\n";
+            *mOFS << "\t\t Deadlock caused by application code (See docId 1552120.1).<br><br>\n"
+                  << "\t\t The code is updating rows in different orders, most likely, and this is best<br>\n"
+                  << "\t\t avoided. Make sure that the code gets object data in the same order (alphabetic?)<br>\n"
+                  << "\t\t to avoid this type of deadlock.<br>\n";
         }
     }
 
     if (!gotCause) {
-        *mOFS << "\t\tDeadlock cause unknown. Please zip and send this trace file - after obfuscating any personal\n"
-              << "\t\tdata or server names, IP addresses, just in case - to Norm via Github as an issue\n"
-              << "\t\tand he'll attempt to find the cause and fix the code to avoid this in future.<br>\n\n"
-              << "\t\tThe Issues URL is <a href=\"https://github.com/NormanDunbar/DeadlockAnalysys/issues\">"
+        *mOFS << "\t\t Deadlock cause unknown. Please zip and send this trace file - after obfuscating any personal\n"
+              << "\t\t data or server names, IP addresses, just in case - to Norm via Github as an issue\n"
+              << "\t\t and he'll attempt to find the cause and fix the code to avoid this in future.<br>\n\n"
+              << "\t\t The Issues URL is <a href=\"https://github.com/NormanDunbar/DeadlockAnalysys/issues\">"
               << "<span class=\"url\">https://github.com/NormanDunbar/DeadlockAnalysys/issues</span></a>.<br>";
     }
-    *mOFS << "</td>\n</tr>\n";
+    *mOFS << "\t</td>\n</tr>\n";
 
     // Aborted SQL
     *mOFS << "<tr>\n\t<th class=\"right th_small\">Aborted SQL</th>\n\t"
@@ -650,13 +765,12 @@ void oraDeadlockReport::deadlockWaiters(oraDeadlock *dl)
 
             // Close the row.
             *mOFS << "</tr>\n";
-
-            //
         }
     }
 
     // Close the table.
     *mOFS << "</table>\n\n";
+
 
 }
 

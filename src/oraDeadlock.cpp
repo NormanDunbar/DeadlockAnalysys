@@ -329,8 +329,12 @@ bool oraDeadlock::extractCurrentSQL()
     mTraceFile->readLine();
     while (true) {
         unsigned length = mTraceFile->currentLine().size();
-        if (length >= 10) {
-            if (mTraceFile->currentLine().substr(0, 10) == "==========") {
+        if (length >= 5) {
+            string temp = mTraceFile->currentLine().substr(0, 5);
+            // SQL code ends with =====...=====
+            // PL/SQL code may end with ----- if the stack is dumped.
+            if (temp == "=====" ||
+                temp == "-----") {
                 break;
             }
         }

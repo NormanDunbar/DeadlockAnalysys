@@ -58,6 +58,7 @@ class oraDeadlockReport
         void reportHeader();
         void reportFooter();
         void reportBody();
+        void reportSidebar();
         void traceFileDetails();
         void quickIndex();
         void deadlocks();

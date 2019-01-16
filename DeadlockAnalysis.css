@@ -1,16 +1,9 @@
-body {font: 90% Verdana, Arial, Helvetica, sans-serif;
+body {
     margin: 0;
     padding: 0;
-    background: rgb(95%,95%,80%);
+    background: rgb(95%, 95%, 80%);
     color: black;
 }
-
-/*
-body {
-    background: ivory;
-    color: maroon;
-}
-*/
 
 table, th, td {
     border: 1px solid rgb(85%,85%,70%);
@@ -24,19 +17,15 @@ table, th, td {
 table {
     border-collapse: collapse;
     background: beige;
-    /*font-family: "courier new","lucida console",mono;*/
     font-size: smaller;
-    /* If "fixed" is not used, the widths are ignored. Sigh */
-    /* So the <table> is hard coded as <table style="width:95%"> which I don't like. */
     table-layout: fixed;
-    /* Margin is half of 100-95% to accommodate a 95% wide table. */
-    margin-left: 2.5%;
+    /* margin-left: 2.5%; */
 }
 
 pre {
     white-space: pre-wrap;
     word-break: keep-all;
-    font-family: "courier new";
+    font: 100% mono;
 }
 
 th {
@@ -143,20 +132,10 @@ li {
 
 .url {
     color: blue;
-    font-family: "courier new";
+    font: mono;
 }
 
-
-/*
- * Sidebar stuff to stay on screen during scrolling.
- */
-/*-------------------------------------------------------------*
- * This really screws IR5.5 - it scrolls and has huge gaps :o( *
- * Also, having a fixed position navigation box, gives a dark  *
- * line when the content is scrolled. A bottom border which is *
- * the same colour as the background fixes that ! (ND)         *
- *-------------------------------------------------------------*/
- 
+/* Sidebar stuff - stays still when scrolling */
 div {
     display: block;
 }
@@ -170,7 +149,7 @@ div#sidebar {
     top: 8;
     left: 4;
     width: 10%;
-    margin: 0 0 0 2%;
+    margin: 0 0 0 2;
     text-align: center;
     border-bottom: 1px solid rgb(95%,95%,80%);
 }
@@ -187,7 +166,7 @@ div#sidebar {
     padding: 0 0 2em;
     border: 1px solid rgb(73%,73%,58%);
     background: beige;
-}    
+}
 
 #sidebar h4, #sidebar ul {
     margin: 0 6px 0 0;
@@ -208,15 +187,16 @@ div#sidebar {
 }
 
 #sidebar a:link {
-    color: rgb(20%,40%,0%);
+   color: rgb(20%,40%,0%);
 }
 
 #sidebar a:visited {
-    color: rgb(58%,68%,40%);
+   color: rgb(58%,68%,40%);
 }
 
 #sidebar a:hover {
-    color: rgb(10%,20%,0%);
-    background: #FFF;
+   color: rgb(10%,20%,0%);
+   background: #FFF;
 }
+
 
