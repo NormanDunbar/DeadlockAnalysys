@@ -75,7 +75,7 @@ using std::vector;
 
 // Globals. (Yes, I know they are frowned upon - I don't actually care, ok?)
 string programName = "DeadlockAnalysis";
-string programVersion = "0.1.0";
+string programVersion = "0.1.1";
 string programAuthor = "Norman Dunbar";
 string authorEmail = "norman@dunbar-it.co.uk";
 

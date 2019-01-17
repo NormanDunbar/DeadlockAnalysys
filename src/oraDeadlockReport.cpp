@@ -478,7 +478,7 @@ void oraDeadlockReport::quickIndex()
 {
     unsigned maxDeadlocks = mTraceFile->deadlockCount();
 
-    if (maxDeadlocks > 1) {
+    if (maxDeadlocks > 0) {
         // There's always a summary.
         *mOFS << "\t<li><a href=\"#summary\">Summary</a></li>\n";
 
