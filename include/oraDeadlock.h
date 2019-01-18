@@ -52,6 +52,7 @@ class oraDeadlock
         friend ostream& operator<<(ostream &out, const oraDeadlock &dl);
         vector<string> *signatures();
         vector<string> *waitStack();
+        unsigned abortedSession();
         //map<unsigned, oraBlockerWaiter> *blockers();
         //map<unsigned, oraBlockerWaiter> *waiters();
         oraBlockerWaiter *blockerByIndex(const unsigned index);

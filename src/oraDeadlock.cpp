@@ -581,7 +581,19 @@ bool oraDeadlock::tm()      // Missing FK index?
 }
 
 
-
+//==============================================================================
+//                                                              abortedSession()
+//------------------------------------------------------------------------------
+// Returns the session (SID) of the session that had its statement aborted
+// because of the deadlock. This is the first session in the waiters part of the
+// deadlock graph.
+//==============================================================================
+unsigned oraDeadlock::abortedSession()
+{
+    if (rows() > 0) {
+        return waiterByIndex(0)->session();
+    }
+}
 
 //==============================================================================
 //                                                                   Operator <<
