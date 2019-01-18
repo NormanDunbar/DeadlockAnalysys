@@ -593,6 +593,8 @@ unsigned oraDeadlock::abortedSession()
     if (rows() > 0) {
         return waiterByIndex(0)->session();
     }
+
+    return 0;
 }
 
 //==============================================================================

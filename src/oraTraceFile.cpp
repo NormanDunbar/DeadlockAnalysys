@@ -183,8 +183,10 @@ string oraTraceFile::readLine()
 // Looks for some text, case sensitive, at the start of the current
 // line from the trace file. If not found, this will keep reading lines until
 // it is found or we hit an error or EOF. Returns true if found.
+// Returns false if not found, but the end of a deadlock dump is found first, if
+// stopAtEndOfDeadlock is true.
 //==============================================================================
-bool oraTraceFile::findAtStart(const string lookFor)
+bool oraTraceFile::findAtStart(const string lookFor, const bool stopAtEndOfDeadlock)
 {
     auto lookSize = lookFor.length();
 
@@ -193,6 +195,12 @@ bool oraTraceFile::findAtStart(const string lookFor)
         if (mCurrentLine.substr(0, lookSize) == lookFor ) {
             return true;
         }
+
+        if (stopAtEndOfDeadlock) {
+            if (mCurrentLine == "END OF PROCESS STATE") {
+                return false;
+            }
+        }
     }
 
     // Return error or EOF.
@@ -200,14 +208,16 @@ bool oraTraceFile::findAtStart(const string lookFor)
 }
 
 //==============================================================================
-//                                                                 findAtStart()
+//                                                               findNearStart()
 //------------------------------------------------------------------------------
 // Looks for some text, case sensitive, at the start of the current
 // line from the trace file but with may be prefixed by whitespace.
 // If not found, this will keep reading lines until
 // it is found or we hit an error or EOF. Returns true if found.
+// Returns false if not found, but the end of a deadlock dump is found first if
+// stopAtEndOfDeadlock is true.
 //==============================================================================
-bool oraTraceFile::findNearStart(const string lookFor)
+bool oraTraceFile::findNearStart(const string lookFor, const bool stopAtEndOfDeadlock)
 {
     auto lookSize = lookFor.length();
 
@@ -215,6 +225,12 @@ bool oraTraceFile::findNearStart(const string lookFor)
         readLine();
         if (trimmedLine().substr(0, lookSize) == lookFor ) {
             return true;
+        }
+
+        if (stopAtEndOfDeadlock) {
+            if (mCurrentLine == "END OF PROCESS STATE") {
+                return false;
+            }
         }
     }
 
@@ -225,11 +241,13 @@ bool oraTraceFile::findNearStart(const string lookFor)
 //==============================================================================
 //                                                                findDeadlock()
 //------------------------------------------------------------------------------
-// Helper to find the start of each deadlock in the tracefile.
+// Helper to find the start of each deadlock in the tracefile. Sets  the flag to
+// false as we could be still in the middle of a deadlock dump. We need to
+// ignore the end of this deadlock, to find the next one.
 //==============================================================================
 bool oraTraceFile::findDeadlock()
 {
-    return findAtStart("DEADLOCK DETECTED");
+    return findAtStart("DEADLOCK DETECTED", false);
 }
 
 //==============================================================================

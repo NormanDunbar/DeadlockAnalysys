@@ -673,7 +673,7 @@ void oraDeadlockReport::deadlockGraph(oraDeadlock *dl)
     for (unsigned x = 0; x < 2; x++) {
         // Two sets of headings here.
         *mOFS << "<th>Process</th>\n\t"
-              << "<th>Session</th>\n\t"
+              << "<th>SID</th>\n\t"
               << "<th>Holding</th>\n\t"
               << "<th>Waiting</th>\n\t";
     }
@@ -726,7 +726,7 @@ void oraDeadlockReport::deadlockWaiters(oraDeadlock *dl)
 
     // Headings.
     *mOFS << "<tr>\n\t<th class=\"th_medium\">Resource Name</th>\n\t"
-          << "<th class=\"th_tiny\">Session</th>\n\t"
+          << "<th class=\"th_tiny\">SID</th>\n\t"
           << "<th class=\"th_tiny\">Blocker</th>\n\t"
           << "<th class=\"th_medium\">Rowid Waited</th>\n\t"
           << "<th class=\"th_tiny\">File No.</th>\n\t"
