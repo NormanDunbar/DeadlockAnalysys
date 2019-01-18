@@ -536,16 +536,16 @@ void oraDeadlockReport::deadlockSummary(oraDeadlock *dl)
           << dl->lineNumber()
           << "</td>\n</tr>\n";
 
-    // The aborted session (SID).
-    *mOFS << "<tr>\n\t<th class=\"right th_small\">Dumped SID</th>\n\t"
-          << "<td class=\"left\">"
-          << dl->abortedSession()
-          << "</td>\n</tr>\n";
-
     // Sessions involved in the deadlock.
     *mOFS << "<tr>\n\t<th class=\"right th_small\">Sessions</th>\n\t"
           << "<td class=\"left\">"
           << dl->rows()
+          << "</td>\n</tr>\n";
+
+    // The aborted session (SID).
+    *mOFS << "<tr>\n\t<th class=\"right th_small\">Dumped SID</th>\n\t"
+          << "<td class=\"left\">"
+          << dl->abortedSession()
           << "</td>\n</tr>\n";
 
     // Main deadlock wait reason.
