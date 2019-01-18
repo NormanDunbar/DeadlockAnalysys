@@ -86,8 +86,8 @@ class oraTraceFile
         string currentLine() { return mCurrentLine; }
         string previousLine() { return mPreviousLine; }
         unsigned lineNumber() { return mLineNumber; }
-        bool findAtStart(const string lookFor);
-        bool findNearStart(const string lookFor);
+        bool findAtStart(const string lookFor, const bool stopAtEndOfDeadlock = true);
+        bool findNearStart(const string lookFor, const bool stopAtEndOfDeadlock = true);
         bool findDeadlock();
         bool findDeadlockGraph();
         unsigned findAllDeadlocks();
