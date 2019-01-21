@@ -459,8 +459,18 @@ void oraDeadlockReport::traceFileDetails()
           << "\"> There "
           << (deadlockCount == 1 ? "was " : "were ") << deadlockCount << " deadlock"
           << (deadlockCount == 1 ? "" : "s")
-          << " in the trace file"
-          << "</td>\n</tr>\n";
+          << " in the trace file:<br><br>\n";
+
+    for (unsigned x = 0; x < mTraceFile->deadlockCount(); x++)     {
+        // List each deadlock reason, with a link to the deadlock.
+        *mOFS << "<a href=\"#deadlock_" << x + 1 << "\">"
+              << "Deadlock " << x + 1 << "</a>: "
+              << mTraceFile->deadLock(x)->deadlockWait()
+              << "<br>";
+    }
+
+    // Complete this row.
+    *mOFS << "</td>\n</tr>\n";
 
     // Close the table.
     *mOFS << "</table>\n" << endl;

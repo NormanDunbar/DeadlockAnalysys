@@ -1,0 +1,26 @@
+= Deadlock Analysis - Change Log
+
+_Latest updates at the top of this file._
+
+
+== Version 0.1.3
+Another enhancement release.
+
+* When multiple deadlocks exists in a trace file, it's nice to see what caused them all in the `Tracefile Summary` section of the report.
+
+
+== Version 0.1.2
+Slight enhancement release.
+
+* Documentation added.
+* Scanning within deadlocks stops at  the end of the current deadlock.
+* The dumped session's SID is listed in the `Deadlock Summary` section in the report.
+
+
+== Version 0.1.1
+* Fixed bug whereby if there was a single deadlock in the trace file, the contents area of the report was blank.
+
+
+== Version 0.1.0
+* Initial release. _Everything_ is working perfectly, because it _always_ does, doesn't it?
+
