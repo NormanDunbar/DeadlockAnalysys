@@ -13,7 +13,6 @@
 				<Option compiler="gcc" />
 				<Option parameters="C:\Users\hisg494\CodeBlocks\SourceCode\DeadlockAnalysys\test.trc" />
 				<Compiler>
-					<Add option="-std=c++14" />
 					<Add option="-g" />
 					<Add directory="include" />
 				</Compiler>
@@ -26,7 +25,6 @@
 				<Option parameters="C:\Users\hisg494\CodeBlocks\SourceCode\DeadlockAnalysys\test.trc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add option="-std=c++14" />
 					<Add directory="include" />
 				</Compiler>
 				<Linker>
@@ -36,8 +34,13 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-m32" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Linker>
+			<Add option="-m32" />
+		</Linker>
 		<Unit filename="include/oraBlockerWaiter.h" />
 		<Unit filename="include/oraDeadlock.h" />
 		<Unit filename="include/oraDeadlockReport.h" />
