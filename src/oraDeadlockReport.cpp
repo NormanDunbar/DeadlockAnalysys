@@ -608,15 +608,14 @@ void oraDeadlockReport::deadlockSummary(oraDeadlock *dl)
             // It's either bitmap indexes or PK/UK manipulation gone wrong.
             *mOFS << "\t\t Bitmap indexes (See docId 1552175.1);<br><br>\n"
                   << "\t\t If the objects (see below) are bitmap indexes, then that's your problem.<br>\n"
-                  << "\t\t those should not be used in an OLTP or frequently updated system. Change them<br>\n"
+                  << "\t\t Those should not be used in an OLTP or <em>infrequently</em> updated system. Change them<br>\n"
                   << "\t\t to normal type indexes and watch  the deadlocks vanish!<br><hr>\n"
                   //
                   << "\t\t Manipulation of primary/unique key in an inconsistent order (See docId 1552191.1).<br><br>\n"
-                  << "\t\t The code is, apparently, attempting to maintain numerous rows with the same Primary<br>\n"
-                  << "\t\t or Unique Key. Are you using sequence numbers based on a table, rather than on sequences?<br>\n"
-                  << "\t\t If one or more of the waiters is showing 'no rows' in the waited on rowid, and <br>\n"
-                  << "<strong>and</strong> at least one other is an index object, then this is <br>\n"
-                  << "\t\t the most likely cause of this type of deadlock.<br>\n";
+                  << "\t\t The sessions are, apparently, attempting to maintain numerous rows with the same Primary<br>\n"
+                  << "\t\t or Unique Key. Are you using sequence numbers based on a table, rather than on sequences?<br><br>\n"
+                  << "\t\t If one or more of the waiters is showing 'no rows' in the waited on rowid, <em>and</em> at least <br>\n"
+                  << "\t\t one other is an index object, then this is the most likely cause of this type of deadlock.<br>\n";
         }
     }
 
@@ -646,7 +645,7 @@ void oraDeadlockReport::deadlockSummary(oraDeadlock *dl)
     if (!gotCause) {
         *mOFS << "\t\t Deadlock cause unknown. Please zip and send this trace file - after obfuscating any personal\n"
               << "\t\t data or server names, IP addresses, just in case - to Norm via Github as an issue\n"
-              << "\t\t and he'll attempt to find the cause and fix the code to avoid this in future.<br>\n\n"
+              << "\t\t and he'll attempt to find the cause and fix the code to avoid this in future.<br><br>\n"
               << "\t\t The Issues URL is <a href=\"https://github.com/NormanDunbar/DeadlockAnalysys/issues\">"
               << "<span class=\"url\">https://github.com/NormanDunbar/DeadlockAnalysys/issues</span></a>.<br>";
     }

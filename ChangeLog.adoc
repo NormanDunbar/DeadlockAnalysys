@@ -3,6 +3,10 @@
 _Latest updates at the top of this file._
 
 
+== Version 0.1.4
+Minor bug fixes - some text needed grammar changes. Also, for 'frequently' read 'infrequently' in the bitmap indexes explanation.
+
+
 == Version 0.1.3
 Another enhancement release.
 
