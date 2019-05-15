@@ -146,6 +146,15 @@ void oraDeadlockReport::createCSSFile()
                << "    width: 10%;\n"
                << "}\n\n";
 
+        *cssFS << "/* \n"
+               << " * Used to hide the top left cell in the Deadlock Graph table. \n"
+               << " */ \n"
+               << ".th_background { \n"
+               << "    background: rgb(95%, 95%, 80%); \n"
+               << "    border-top: 1px solid rgb(95%, 95%, 80%); \n"
+               << "    border-left: 1px solid rgb(95%, 95%, 80%); \n"
+               << "}\n\n";
+
         *cssFS << ".th_small {\n"
                << "    width: 12%;\n"
                << "}\n\n";
@@ -608,7 +617,7 @@ void oraDeadlockReport::deadlockSummary(oraDeadlock *dl)
             // It's either bitmap indexes or PK/UK manipulation gone wrong.
             *mOFS << "\t\t Bitmap indexes (See docId 1552175.1);<br><br>\n"
                   << "\t\t If the objects (see below) are bitmap indexes, then that's your problem.<br>\n"
-                  << "\t\t Those should not be used in an OLTP or <em>infrequently</em> updated system. Change them<br>\n"
+                  << "\t\t Those should not be used in an OLTP or in <em>frequently</em> updated system. Change them<br>\n"
                   << "\t\t to normal type indexes and watch  the deadlocks vanish!<br><hr>\n"
                   //
                   << "\t\t Manipulation of primary/unique key in an inconsistent order (See docId 1552191.1).<br><br>\n"
@@ -674,7 +683,7 @@ void oraDeadlockReport::deadlockGraph(oraDeadlock *dl)
     *mOFS << "<table  style=\"width:95%\">\n";
 
     // Headings for table.
-    *mOFS << "<tr>\n\t<th class=\"th_medium\">&nbsp;</th>\n\t"
+    *mOFS << "<tr>\n\t<th class=\"th_medium th_background\">&nbsp;</th>\n\t"
           << "<th colspan=4 class=\"th_large\">Blockers</th>\n\t"
           << "<th colspan=4 class=\"th_large\">Waiters</th>\n</tr>\n";
 

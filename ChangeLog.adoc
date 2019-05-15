@@ -2,9 +2,13 @@
 
 _Latest updates at the top of this file._
 
+== Version 1.05
+* Minor bug fix. Changed the text _infrequently_ to _in frequently_ - a whole world of difference!
+* Slight update to the CSS and layout of the Deadlock Graph table - hiding the top left cell.
+
 
 == Version 0.1.4
-Minor bug fixes - some text needed grammar changes. Also, for 'frequently' read 'infrequently' in the bitmap indexes explanation.
+* Minor bug fixes - some text needed grammar changes. Also, for 'frequently' read 'infrequently' in the bitmap indexes explanation.
 
 
 == Version 0.1.3
