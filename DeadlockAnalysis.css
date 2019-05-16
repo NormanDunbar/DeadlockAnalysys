@@ -52,6 +52,15 @@ th {
     width: 10%;
 }
 
+/* 
+ * Used to hide the top left cell in the Deadlock Graph table. 
+ */ 
+.th_background { 
+    background: rgb(95%, 95%, 80%); 
+    border-top: 1px solid rgb(95%, 95%, 80%); 
+    border-left: 1px solid rgb(95%, 95%, 80%); 
+}
+
 .th_small {
     width: 12%;
 }

@@ -90,7 +90,7 @@ The trace file summary is displayed at the start of the report. It simply shows 
 === Deadlock Summary
 image::images/deadlockSummary.png[]
 
-Each deadlock has it's own sections in the report. There is a summary, the graph and details of the waiting sessions for each deadlock.
+Each deadlock has its own sections in the report. There is a summary, the graph and details of the waiting sessions for each deadlock.
 
 The deadlock summary lists overall details of the particular deadlock itself. Here you will find:
 
