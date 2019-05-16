@@ -37,7 +37,7 @@ bin/*
 *.depend
 *.layout
 *.save
-
+DeadlockAnalysis.cbp
 
 # My Test File(s)
 *.trc
