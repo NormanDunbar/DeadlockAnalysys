@@ -53,6 +53,9 @@ class oraBlockerWaiter
         unsigned process() { return mProcess; }
         void setProcess(const unsigned val) { mProcess = val; }
 
+        unsigned serial() { return mSerial; }
+        void setSerial(const unsigned val) { mSerial = val; }
+
         string holds() { return mHolds; }
         void setHolds(string val);
 
@@ -86,6 +89,7 @@ class oraBlockerWaiter
         string mResourceName;
         unsigned mSession;
         unsigned mProcess;
+        unsigned mSerial;
         string mHolds;
         string mWaits;
         string mRowidWait;

@@ -111,6 +111,33 @@ bool oraDeadlock::extractDeadlock()
 //==============================================================================
 //                                                        extractDeadlockGraph()
 //------------------------------------------------------------------------------
+// When passed a string, extracts the first field of text from the string, then
+// trims that off of the string. Returns the extracted text. Used to extract the
+// various fields from a deadlock graph. This is required as multi-tenant trace
+// files are way different to normal trace files.
+//==============================================================================
+string oraDeadlock::nextValue(string *text)
+{
+    size_t pos;
+    size_t posEnd;
+
+    // The next field is all text from the first non space to following space
+    // or, until the end of the input text.
+    pos = text->find_first_not_of(" \t\r\n\f\v");
+    posEnd = text->find(" ", pos + 1);
+    if (posEnd == string::npos) {
+        posEnd = text->size();
+    }
+
+    string result  = text->substr(pos, posEnd - pos);
+    *text = text->substr(posEnd);
+    return result;
+}
+
+
+//==============================================================================
+//                                                        extractDeadlockGraph()
+//------------------------------------------------------------------------------
 // Extracts relevant information from the tracefile for each deadlock
 // found within.
 //==============================================================================
@@ -129,12 +156,24 @@ bool oraDeadlock::extractDeadlockGraph()
         return false;
     }
 
-    /*
+    /* 11G:
                            ---------Blocker(s)--------  ---------Waiter(s)---------
     Resource Name          process session holds waits  process session holds waits
     TX-0018001f-0025006a       985     272     X            821    1019           S
     TX-0004000e-004a8a86       821    1019     X            779    2156           S
     TX-00360007-001b448f       779    2156     X            985     272           S
+    */
+
+    /* 12C (Multi-tenant):
+                                              ------------Blocker(s)-----------  ------------Waiter(s)------------
+    Resource Name                             process session holds waits serial  process session holds waits serial
+    TX-000D0010-0000022B-F3D5845B-00000000        185    2560     X        57127     162     574           S  61375
+    TX-0008000E-00001DD2-F3D5845B-00000000        162     574     X        61375     201    2558           S  13549
+    TX-00020015-00001CC8-F3D5845B-00000000        201    2558     X        13549     160      11           S  13655
+    TX-00110013-00000006-F3D5845B-00000000        160      11     X        13655     157    3685           S  51887
+    TX-00060016-00001D02-F3D5845B-00000000        157    3685     X        51887     193     300           S   7492
+    TX-0005000D-00001D02-F3D5845B-00000000        193     300     X         7492     151    1999           S  55013
+    TX-000A0019-00015DF7-F3D5845B-00000000        151    1999     X        55013     185    2560           S  57127
     */
 
     // Find the resources in the deadlock.
@@ -149,20 +188,50 @@ bool oraDeadlock::extractDeadlockGraph()
     // And a signature.
     string signature;
 
+    // Multi-tenant have serial# as part of the detail.
+    bool multiTenant = ((mTraceFile->mCurrentLine.find("serial")) != string::npos);
+
+    // Using a spare string in a temporary manner - sorry if there is confusion!
     deadlockTime = mTraceFile->readLine();
+
     while (mTraceFile->good()) {
         // The resources end at a one-space line.
         if (deadlockTime == " ") {
             break;
         }
 
-        //Extract the blocking session's details.
+        signature = deadlockTime.substr(0, 2) + '-';
+
+        // Extract the Blocker details.
+        tempBlocker.setResourceName(nextValue(&deadlockTime));
+        tempBlocker.setProcess(stoi(nextValue(&deadlockTime)));
+        tempBlocker.setSession(stoi(nextValue(&deadlockTime)));
+        tempBlocker.setHolds(nextValue(&deadlockTime));
+        if (multiTenant) {
+            tempBlocker.setSerial(stoi(nextValue(&deadlockTime)));
+        }
+        signature += tempBlocker.holds();
+
+
+        // Extract the Waiter details.
+        tempWaiter.setProcess(stoi(nextValue(&deadlockTime)));
+        tempWaiter.setSession(stoi(nextValue(&deadlockTime)));
+        tempWaiter.setWaits(nextValue(&deadlockTime));
+        if (multiTenant) {
+            tempBlocker.setSerial(stoi(nextValue(&deadlockTime)));
+        }
+        signature += '-' + tempWaiter.waits();
+
+
+
+/*        //Extract the blocking session's details.
         signature = deadlockTime.substr(0, 2) + '-';
 
         auto pos = deadlockTime.find(" ");
         tempBlocker.setResourceName(deadlockTime.substr(0, pos));
-        tempBlocker.setProcess(stoi(deadlockTime.substr(23, 7)));
-        tempBlocker.setSession(stoi(deadlockTime.substr(31, 7)));
+
+        tempBlocker.setProcess(stoi(deadlockTime.substr(pos+2, 7)));   //23,7
+        tempBlocker.setSession(stoi(deadlockTime.substr(pos+9, 7)));   //31,7
         tempBlocker.setHolds(deadlockTime.substr(39, 5));
         signature += (tempBlocker.holds().empty() ? "" : tempBlocker.holds());
         tempBlocker.setWaits(deadlockTime.substr(45, 5));
@@ -176,7 +245,7 @@ bool oraDeadlock::extractDeadlockGraph()
         signature += '-' + (tempWaiter.holds().empty() ? "" : tempWaiter.holds());
         tempWaiter.setWaits(deadlockTime.substr(74, 5));
         signature += (tempWaiter.waits().empty() ? "" : tempWaiter.waits());
-
+*/
         // Set the corresponding other session.
         tempBlocker.setOtherSession(tempWaiter.session());
         tempWaiter.setOtherSession(tempBlocker.session());

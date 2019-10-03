@@ -85,6 +85,7 @@ class oraDeadlock
         bool extractWaitStack();
         string mDeadlockWait;
         string mAbortedSQL;
+        string nextValue(string *text);
 };
 
 #endif // ORADEADLOCK_H

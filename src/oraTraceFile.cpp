@@ -71,7 +71,7 @@ void oraTraceFile::initialise()
     while (mIFS->good()) {
         readLine();
 
-        if (mCurrentLine.empty()) {
+        if (mCurrentLine.empty() || mCurrentLine.substr(0, 17) == "DEADLOCK DETECTED") {
             break;
         }
 
@@ -162,6 +162,7 @@ oraDeadlock *oraTraceFile::deadLock(const unsigned index)
 // Reads the next line from the tracefile. Makes sure that line numbers
 // and previous lines are sorted out. Returns the new line read.
 //==============================================================================
+/*
 string oraTraceFile::readLine()
 {
     mPreviousLine = mCurrentLine;
@@ -170,8 +171,27 @@ string oraTraceFile::readLine()
     if (mIFS->good()) {
         mLineNumber++;
         //std::cerr << mLineNumber << ": [" << mCurrentLine << ']' << endl;
+
         return mCurrentLine;
     };
+
+    // Oops! EOF or error occurred.
+    return "";
+}
+*/
+string oraTraceFile::readLine()
+{
+    mPreviousLine = mCurrentLine;
+
+    while (mIFS->good()) {
+        getline(*mIFS, mCurrentLine);
+        mLineNumber++;
+
+        //std::cerr << mLineNumber << ": [" << mCurrentLine << ']' << endl;
+        if (!mCurrentLine.empty()) {
+            return mCurrentLine;
+        }
+    }
 
     // Oops! EOF or error occurred.
     return "";
@@ -191,16 +211,20 @@ bool oraTraceFile::findAtStart(const string lookFor, const bool stopAtEndOfDeadl
     auto lookSize = lookFor.length();
 
     while (mIFS->good()) {
-        readLine();
+        // Check current line first
         if (mCurrentLine.substr(0, lookSize) == lookFor ) {
             return true;
         }
 
+        // Time to stop yet?
         if (stopAtEndOfDeadlock) {
             if (mCurrentLine == "END OF PROCESS STATE") {
                 return false;
             }
         }
+
+        // Try the next line.
+        readLine();
     }
 
     // Return error or EOF.
@@ -267,6 +291,7 @@ bool oraTraceFile::findDeadlockGraph()
 //==============================================================================
 string oraTraceFile::trimmedLine()
 {
+    //cerr << "trimmedLine(" << mLineNumber << "): [" << mCurrentLine << "]\n";
     return mCurrentLine.substr(mCurrentLine.find_first_not_of(" \t"));
 }
 
