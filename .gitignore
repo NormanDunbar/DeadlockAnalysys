@@ -37,7 +37,7 @@ bin/*
 *.depend
 *.layout
 *.save
-
+*.cbp
 
 # My Test File(s)
 *.trc
